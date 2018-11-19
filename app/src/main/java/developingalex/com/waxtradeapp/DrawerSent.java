@@ -153,8 +153,9 @@ public class DrawerSent extends Fragment {
 
             @Override
             public void onFailure() {
-                text.setText(R.string.info_no_offer);
+                adapter.notifyDataSetChanged();
                 swipeRefreshLayout.setRefreshing(false);
+                text.setText(R.string.info_no_offer);
             }
         }).execute();
     }

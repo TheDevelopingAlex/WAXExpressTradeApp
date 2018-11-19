@@ -166,9 +166,10 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
 
                         JSONObject images = jsonObject.getJSONObject("image");
 
-                        if (selectedItems.contains(jsonObject.getString("id")))
-                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),true));
-                        else
+                        if (selectedItems.contains(jsonObject.getString("id"))) {
+                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString() + "$", images.getString("300px"), jsonObject.getString("color"), true));
+                            total_value+=price;
+                        } else
                             itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),false));
                     }
 

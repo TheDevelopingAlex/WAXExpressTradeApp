@@ -137,13 +137,6 @@ public class DrawerHistory extends Fragment {
 
             swipeRefreshLayout.setRefreshing(true);
 
-
-            if (offerList.isEmpty()) {
-                loadOffers();
-            } else {
-                adapter.notifyDataSetChanged();
-            }
-
             recyclerView = view.findViewById(R.id.drawer_history_recyclerView);
             recyclerView.setHasFixedSize(true);
             recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -155,6 +148,8 @@ public class DrawerHistory extends Fragment {
             adapter.acceptButtonVisibility(false);
             adapter.declineButtonVisibility(false);
             adapter.statusTextVisibility(true);
+
+            loadOffers();
 
             adapter.setOnItemClickListener(new OfferAdapter.OnItemClickListener() {
                 @Override
@@ -176,6 +171,7 @@ public class DrawerHistory extends Fragment {
         }
 
         private void loadOffers() {
+            offerList.clear();
             LongOperation longOperation = new LongOperation(mActivityRef.get().getActivity(),"sent", new OnEventListener() {
                 @Override
                 public void onSuccess(Offer offer) {
@@ -187,6 +183,7 @@ public class DrawerHistory extends Fragment {
 
                 @Override
                 public void onFailure(String text) {
+                    adapter.notifyDataSetChanged();
                     swipeRefreshLayout.setRefreshing(false);
                     mText.setText(R.string.info_no_offer);
                 }
@@ -237,12 +234,6 @@ public class DrawerHistory extends Fragment {
 
             swipeRefreshLayout.setRefreshing(true);
 
-            if (offerList.isEmpty()) {
-                loadOffers();
-            } else {
-                adapter.notifyDataSetChanged();
-            }
-
             recyclerView = view.findViewById(R.id.drawer_history_recyclerView);
             recyclerView.setHasFixedSize(true);
             recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -254,6 +245,8 @@ public class DrawerHistory extends Fragment {
             adapter.acceptButtonVisibility(false);
             adapter.declineButtonVisibility(false);
             adapter.statusTextVisibility(true);
+
+            loadOffers();
 
             adapter.setOnItemClickListener(new OfferAdapter.OnItemClickListener() {
                 @Override
@@ -275,6 +268,7 @@ public class DrawerHistory extends Fragment {
         }
 
         private void loadOffers() {
+            offerList.clear();
             LongOperation longOperation = new LongOperation(mActivityRef.get().getActivity(),"received", new OnEventListener() {
                 @Override
                 public void onSuccess(Offer offer) {
@@ -286,6 +280,7 @@ public class DrawerHistory extends Fragment {
 
                 @Override
                 public void onFailure(String text) {
+                    adapter.notifyDataSetChanged();
                     swipeRefreshLayout.setRefreshing(false);
                     mText.setText(R.string.info_no_offer);
                 }

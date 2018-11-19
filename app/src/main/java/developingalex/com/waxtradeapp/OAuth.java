@@ -12,7 +12,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
@@ -25,8 +24,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static android.content.Context.JOB_SCHEDULER_SERVICE;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static java.security.AccessController.getContext;
 
 
 public class OAuth {
@@ -295,6 +292,11 @@ public class OAuth {
                                                         }
 
                                                     } else {
+                                                        editor.remove("refresh_token").commit();
+                                                        editor.remove("access_token").commit();
+                                                        JobScheduler scheduler = (JobScheduler) mContext.getSystemService(JOB_SCHEDULER_SERVICE);
+                                                        scheduler.cancelAll();
+
                                                         Intent intent = new Intent(mContext, MainActivity.class);
                                                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                                         mContext.startActivity(intent);
