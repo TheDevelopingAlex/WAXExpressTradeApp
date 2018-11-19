@@ -8,12 +8,12 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +29,7 @@ import java.util.Objects;
 public class DrawerSent extends Fragment {
 
     private TextView text;
-    private ProgressBar progressBar;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     private TradeInterface tradeInterface;
 
@@ -49,7 +49,16 @@ public class DrawerSent extends Fragment {
         // find and initialize components
         tradeInterface = new TradeInterface(view.getContext());
         text = view.findViewById(R.id.drawer_sender_text);
-        progressBar = view.findViewById(R.id.drawerSentProgress);
+
+        swipeRefreshLayout = view.findViewById(R.id.drawer_sent_swipe);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                loadOffers();
+            }
+        });
+        // Configure the refreshing colors
+        swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark);
 
         loadOffers();
 
@@ -69,6 +78,7 @@ public class DrawerSent extends Fragment {
                 Intent intent = new Intent(getActivity(), OfferDetail.class);
                 Bundle b = new Bundle();
                 b.putInt("offerId", offerList.get(position).getId()); // Parameter for new Activity
+                b.putBoolean("hideAccept", false);
                 intent.putExtras(b);
                 startActivity(intent);
             }
@@ -133,17 +143,18 @@ public class DrawerSent extends Fragment {
 
     private void loadOffers() {
         // Start requesting offers from API in background
+        swipeRefreshLayout.setRefreshing(true);
         new LongOperation(DrawerSent.this, new OnEventListener() {
             @Override
             public void onSuccess() {
                 adapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.INVISIBLE);
+                swipeRefreshLayout.setRefreshing(false);
             }
 
             @Override
             public void onFailure() {
                 text.setText(R.string.info_no_offer);
-                progressBar.setVisibility(View.INVISIBLE);
+                swipeRefreshLayout.setRefreshing(false);
             }
         }).execute();
     }

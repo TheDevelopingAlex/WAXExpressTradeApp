@@ -54,7 +54,7 @@ public class myJobService extends JobService {
         return true;
     }
 
-    public void doNotify(int id, String title, String text, int offerId) {
+    public void doNotify(int id, String title, String text, int offerId, boolean hideAccept) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name ="Notification for new offers";
@@ -72,6 +72,7 @@ public class myJobService extends JobService {
 
         Bundle b = new Bundle();
         b.putInt("offerId", offerId); // Parameter for new Activity
+        b.putBoolean("hideAccept", hideAccept);
         notificationIntent.putExtras(b);
 
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -187,26 +188,26 @@ public class myJobService extends JobService {
                                         recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
                                     }
 
-                                    activity.doNotify(timeModified,"You have received a new offer",sender.getString("display_name") + " offers "+ price_format.format(sender_items_price) +"$ for your "+ price_format.format(recipient_items_price) + "$", jsonObject.getInt("id"));
+                                    activity.doNotify(timeModified,"You have received a new offer",sender.getString("display_name") + " offers "+ price_format.format(sender_items_price) +"$ for your "+ price_format.format(recipient_items_price) + "$", jsonObject.getInt("id"), false);
 
                                     break;
                                 }
 
                                 case 3: {
                                     JSONObject recipient = (JSONObject) jsonObject.get("recipient");
-                                    activity.doNotify(timeModified,"Offer #" + jsonObject.getInt("id"),recipient.getString("display_name") + " has ACCEPTED the offer", jsonObject.getInt("id"));
+                                    activity.doNotify(timeModified,"Offer #" + jsonObject.getInt("id"),recipient.getString("display_name") + " has ACCEPTED the offer", jsonObject.getInt("id"), true);
                                     break;
                                 }
 
                                 case 6: {
                                     JSONObject sender = (JSONObject) jsonObject.get("sender");
-                                    activity.doNotify(timeModified,"Offer #" + jsonObject.getInt("id"),sender.getString("display_name") + " has CANCELED the offer", jsonObject.getInt("id"));
+                                    activity.doNotify(timeModified,"Offer #" + jsonObject.getInt("id"),sender.getString("display_name") + " has CANCELED the offer", jsonObject.getInt("id"), true);
                                     break;
                                 }
 
                                 case 7: {
                                     JSONObject recipient = (JSONObject) jsonObject.get("recipient");
-                                    activity.doNotify(timeModified,"Offer #" + jsonObject.getInt("id"),recipient.getString("display_name") + " has DECLINED the offer", jsonObject.getInt("id"));
+                                    activity.doNotify(timeModified,"Offer #" + jsonObject.getInt("id"),recipient.getString("display_name") + " has DECLINED the offer", jsonObject.getInt("id"), true);
                                     break;
                                 }
                             }

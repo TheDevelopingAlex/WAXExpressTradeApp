@@ -1,7 +1,11 @@
 package developingalex.com.waxtradeapp;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,7 +13,11 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -27,6 +35,9 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 public class OfferDetail extends AppCompatActivity {
+
+    private int offerId;
+    private TradeInterface tradeInterface;
 
     private ScrollView content;
     private LinearLayout message;
@@ -52,11 +63,13 @@ public class OfferDetail extends AppCompatActivity {
         // Get ID as parameter
         Bundle b = getIntent().getExtras();
         assert b != null;
-        int id = b.getInt("offerId");
+        offerId = b.getInt("offerId");
+
+        tradeInterface = new TradeInterface(this);
 
         // Init Toolbar
         Toolbar toolbar = findViewById(R.id.offer_detail_toolbar);
-        toolbar.setTitle("Offer #" + id);
+        toolbar.setTitle("Offer #" + offerId);
 
         // Adds Back-Arrow to Toolbar
         setSupportActionBar(toolbar);
@@ -97,7 +110,7 @@ public class OfferDetail extends AppCompatActivity {
         itemAdapter2 = new OfferItemAdapter(OfferDetail.this, itemList2);
         mRecyclerViewBot.setAdapter(itemAdapter2);
 
-        LongOperation longOperation = new LongOperation(this, id, new OnEventListener() {
+        LongOperation longOperation = new LongOperation(this, offerId, new OnEventListener() {
             @Override
             public void onSuccess(JSONObject offer) {
                 DecimalFormat precision = new DecimalFormat("0.00000");
@@ -384,6 +397,103 @@ public class OfferDetail extends AppCompatActivity {
             }
         }
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        // Get ID as parameter
+        Bundle b = getIntent().getExtras();
+        assert b != null;
+        if (b.containsKey("hideAccept") && !b.getBoolean("hideAccept")) {
+            getMenuInflater().inflate(R.menu.inventory_toolbar, menu);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if (item.getItemId() == R.id.action_check) {
+
+            LayoutInflater li = LayoutInflater.from(this);
+            @SuppressLint("InflateParams") View promptsView = li.inflate(R.layout.custom_accept_dialog, null);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+            final Integer id = offerId;
+
+            builder.setTitle("Confirm");
+            builder.setMessage("Please enter your 2-Factor Code below and click 'Accept' to complete the trade");
+            builder.setView(promptsView);
+            builder.setCancelable(false);
+
+            final EditText userInput = promptsView.findViewById(R.id.twoFactorInput);
+
+            builder.setPositiveButton("Accept", new DialogInterface.OnClickListener() {
+
+                public void onClick(DialogInterface dialog, int which) {
+
+                    final DialogInterface temp_dialog = dialog;
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                if (userInput.getText().toString().isEmpty()) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(OfferDetail.this, "Please type in your 2FA code", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                } else {
+                                    try {
+                                        if (tradeInterface.acceptOffer(id, userInput.getText().toString())) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    temp_dialog.dismiss();
+                                                    Toast.makeText(OfferDetail.this, "Offer Accepted", Toast.LENGTH_SHORT).show();
+                                                    finish();
+                                                }
+                                            });
+                                        } else {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    temp_dialog.dismiss();
+                                                    Toast.makeText(OfferDetail.this, tradeInterface.getErrorMessage(), Toast.LENGTH_SHORT).show();
+                                                    finish();
+                                                }
+                                            });
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+                }
+            });
+
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+
+            AlertDialog alert = builder.create();
+            alert.show();
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 }

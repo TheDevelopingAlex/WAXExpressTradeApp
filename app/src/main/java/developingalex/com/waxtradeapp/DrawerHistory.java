@@ -11,12 +11,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -99,9 +99,13 @@ public class DrawerHistory extends Fragment {
     // Fragment for Sent History
     public static class SentFragment extends Fragment {
 
-        public ArrayList<Offer> offerList = new ArrayList<>();
-        public RecyclerView recyclerView;
         private OfferAdapter adapter;
+
+        private SwipeRefreshLayout swipeRefreshLayout;
+        public RecyclerView recyclerView;
+        private TextView mText;
+
+        public ArrayList<Offer> offerList = new ArrayList<>();
 
         public SentFragment() { }
 
@@ -119,28 +123,23 @@ public class DrawerHistory extends Fragment {
         @Override
         public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
-            final TextView mText = view.findViewById(R.id.drawer_history_text);
-            final ProgressBar progressBar = view.findViewById(R.id.drawerHistoryProgress);
+            mText = view.findViewById(R.id.drawer_history_text);
 
-            LongOperation longOperation = new LongOperation(mActivityRef.get().getActivity(),"sent", new OnEventListener() {
+            swipeRefreshLayout = view.findViewById(R.id.drawer_history_swipe);
+            swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
-                public void onSuccess(Offer offer) {
-                    // Add offers to list and notify adapter to refresh it
-                    offerList.add(offer);
-                    adapter.notifyDataSetChanged();
-                    progressBar.setVisibility(View.INVISIBLE);
+                public void onRefresh() {
+                    loadOffers();
                 }
-
-                @Override
-                public void onFailure(String text) {
-                    progressBar.setVisibility(View.INVISIBLE);
-                    mText.setText(R.string.info_no_offer);
-                }
-
             });
+            // Configure the refreshing colors
+            swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark);
+
+            swipeRefreshLayout.setRefreshing(true);
+
 
             if (offerList.isEmpty()) {
-                longOperation.execute();
+                loadOffers();
             } else {
                 adapter.notifyDataSetChanged();
             }
@@ -163,6 +162,7 @@ public class DrawerHistory extends Fragment {
                     Intent intent = new Intent(getActivity(), OfferDetail.class);
                     Bundle b = new Bundle();
                     b.putInt("offerId", offerList.get(position).getId()); // Parameter for new Activity
+                    b.putBoolean("hideAccept", true); // Parameter for new Activity
                     intent.putExtras(b);
                     startActivity(intent);
                 }
@@ -174,15 +174,38 @@ public class DrawerHistory extends Fragment {
                 public void onDeclineClick(int position) { }
             });
         }
+
+        private void loadOffers() {
+            LongOperation longOperation = new LongOperation(mActivityRef.get().getActivity(),"sent", new OnEventListener() {
+                @Override
+                public void onSuccess(Offer offer) {
+                    // Add offers to list and notify adapter to refresh it
+                    offerList.add(offer);
+                    adapter.notifyDataSetChanged();
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+
+                @Override
+                public void onFailure(String text) {
+                    swipeRefreshLayout.setRefreshing(false);
+                    mText.setText(R.string.info_no_offer);
+                }
+            });
+            longOperation.execute();
+        }
     }
 
 
     // Fragment for Sent History
     public static class ReceivedFragment extends Fragment {
 
-        public ArrayList<Offer> offerList = new ArrayList<>();
+        private OfferAdapter adapter;
+
+        private SwipeRefreshLayout swipeRefreshLayout;
         public RecyclerView recyclerView;
-        OfferAdapter adapter;
+        private TextView mText;
+
+        public ArrayList<Offer> offerList = new ArrayList<>();
 
         public ReceivedFragment() { }
 
@@ -200,27 +223,22 @@ public class DrawerHistory extends Fragment {
         @Override
         public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
-            final TextView mText = view.findViewById(R.id.drawer_history_text);
-            final ProgressBar progressBar = view.findViewById(R.id.drawerHistoryProgress);
+            mText = view.findViewById(R.id.drawer_history_text);
 
-            LongOperation longOperation = new LongOperation(mActivityRef.get().getActivity(),"received", new OnEventListener() {
+            swipeRefreshLayout = view.findViewById(R.id.drawer_history_swipe);
+            swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
-                public void onSuccess(Offer offer) {
-                    // Add offers to list and notify adapter to refresh it
-                    offerList.add(offer);
-                    adapter.notifyDataSetChanged();
-                    progressBar.setVisibility(View.INVISIBLE);
-                }
-
-                @Override
-                public void onFailure(String text) {
-                    progressBar.setVisibility(View.INVISIBLE);
-                    mText.setText(R.string.info_no_offer);
+                public void onRefresh() {
+                    loadOffers();
                 }
             });
+            // Configure the refreshing colors
+            swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark);
+
+            swipeRefreshLayout.setRefreshing(true);
 
             if (offerList.isEmpty()) {
-                longOperation.execute();
+                loadOffers();
             } else {
                 adapter.notifyDataSetChanged();
             }
@@ -243,6 +261,7 @@ public class DrawerHistory extends Fragment {
                     Intent intent = new Intent(getActivity(), OfferDetail.class);
                     Bundle b = new Bundle();
                     b.putInt("offerId", offerList.get(position).getId()); // Parameter for new Activity
+                    b.putBoolean("hideAccept", true); // Parameter for new Activity
                     intent.putExtras(b);
                     startActivity(intent);
                 }
@@ -253,6 +272,25 @@ public class DrawerHistory extends Fragment {
                 @Override
                 public void onDeclineClick(int position) { }
             });
+        }
+
+        private void loadOffers() {
+            LongOperation longOperation = new LongOperation(mActivityRef.get().getActivity(),"received", new OnEventListener() {
+                @Override
+                public void onSuccess(Offer offer) {
+                    // Add offers to list and notify adapter to refresh it
+                    offerList.add(offer);
+                    adapter.notifyDataSetChanged();
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+
+                @Override
+                public void onFailure(String text) {
+                    swipeRefreshLayout.setRefreshing(false);
+                    mText.setText(R.string.info_no_offer);
+                }
+            });
+            longOperation.execute();
         }
     }
 
