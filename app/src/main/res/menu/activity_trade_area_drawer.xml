@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <item android:title="@string/drawer_trade_offers">
+        <menu>
+
+            <item
+                android:id="@+id/nav_received"
+                android:icon="@drawable/ic_received"
+                android:title="@string/drawer_received" />
+
+            <item
+                android:id="@+id/nav_sent"
+                android:icon="@drawable/ic_sent"
+                android:title="@string/drawer_sent" />
+
+            <item
+                android:id="@+id/nav_history"
+                android:icon="@drawable/ic_history"
+                android:title="@string/drawer_history" />
+        </menu>
+    </item>
+
+    <item android:title="@string/drawer_general">
+        <menu>
+            <item
+                android:id="@+id/nav_profile"
+                android:icon="@drawable/ic_person_black_24dp"
+                android:title="@string/drawer_profile" />
+
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="@string/drawer_logout" />
+        </menu>
+    </item>
+
+</menu>

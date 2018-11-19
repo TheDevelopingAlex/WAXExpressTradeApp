@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">WAX TradeApp</string>
+    <string name="opskins_logo">OPSkins Logo</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">WAX TradeApp</string>
+    <string name="nav_header_subtitle">WAX TradeApp</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+    <string name="drawer_trade_offers">Trade Offers</string>
+    <string name="drawer_received">Received</string>
+    <string name="drawer_sent">Sent</string>
+    <string name="drawer_history">History</string>
+    <string name="drawer_general">General</string>
+    <string name="drawer_settings">Settings</string>
+    <string name="drawer_profile">Profile</string>
+    <string name="drawer_inventory">Inventory</string>
+    <string name="drawer_logout">Logout</string>
+    <string name="info_no_offer">No Offers Found</string>
+    <string name="infoText1">- Create WAX ExpressTrade trades</string>
+    <string name="infoText2">- Manage your trades</string>
+    <string name="loginText">Sign In via OPSkins</string>
+    <string name="trade_message_helper_text">Message</string>
+    <string name="trade_message_hint">(optional)</string>
+    <string name="trade_2FA">Two-Factor Authentication Code</string>
+    <string name="make_offer">Make Offer</string>
+    <string name="tradeIcon">Trade Icon</string>
+    <string name="tradeURL">Trade URL</string>
+    <string name="desc_itemImage">Item Image</string>
+    <string name="acceptButton">Accept Button</string>
+    <string name="declineButton">Decline Button</string>
+    <string name="copyTradeURL">Copy Trade URL</string>
+    <string name="QRCode">QRCode</string>
+    <string name="scanQRCode">Scan a QR-Code</string>
+    <string name="startTrading">Start Trading</string>
+    <string name="tradeURLEnter">Enter a WAX ExpressTrade URL</string>
+</resources>
