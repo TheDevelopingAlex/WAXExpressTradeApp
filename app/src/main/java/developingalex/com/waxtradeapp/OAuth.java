@@ -294,6 +294,7 @@ public class OAuth {
                                                     } else {
                                                         editor.remove("refresh_token").commit();
                                                         editor.remove("access_token").commit();
+                                                        editor.remove("recentTradePartners").commit();
                                                         JobScheduler scheduler = (JobScheduler) mContext.getSystemService(JOB_SCHEDULER_SERVICE);
                                                         scheduler.cancelAll();
 
@@ -361,6 +362,7 @@ public class OAuth {
                 public void onResponse(@NonNull Call call, @NonNull Response response) {
                     editor.remove("refresh_token").commit();
                     editor.remove("access_token").commit();
+                    editor.remove("recentTradePartners").commit();
                     JobScheduler scheduler = (JobScheduler) mContext.getSystemService(JOB_SCHEDULER_SERVICE);
                     scheduler.cancelAll();
                     ok  = true;

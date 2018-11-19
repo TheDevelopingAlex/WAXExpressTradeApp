@@ -277,8 +277,6 @@ public class DrawerReceived extends Fragment {
             DrawerReceived activity = activityWeakReference.get();
             activity.offerList.clear();
 
-            DecimalFormat price_format = new DecimalFormat("0.00");
-
             if (offers != null) {
                 for (int i = 0; i < offers.length(); i++) {
 
@@ -306,7 +304,7 @@ public class DrawerReceived extends Fragment {
                             recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
                         }
 
-                        activity.offerList.add(new Offer(jsonObject.getInt("id"), sender.getString("display_name"),"Your Items ("+recipient_items_length.toString()+"): "+ price_format.format(recipient_items_price) +"$", "Their Items ("+sender_items_length.toString()+"): "+ price_format.format(sender_items_price) +"$", sender.getString("avatar"), jsonObject.getString("state_name")));
+                        activity.offerList.add(new Offer(jsonObject.getInt("id"), sender.getString("display_name"),"Your Items ("+recipient_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", recipient_items_price) +"$", "Their Items ("+sender_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price) +"$", sender.getString("avatar"), jsonObject.getString("state_name")));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }

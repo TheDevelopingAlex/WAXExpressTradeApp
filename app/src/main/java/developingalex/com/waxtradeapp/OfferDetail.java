@@ -112,7 +112,7 @@ public class OfferDetail extends AppCompatActivity {
             @Override
             public void onSuccess(JSONObject offer) {
                 DecimalFormat precision = new DecimalFormat("0.00000");
-                DecimalFormat price_format = new DecimalFormat("0.00");
+
                 try {
                     if(offer.getString("sent_by_you").equals("true")) {
                         // You are Sender
@@ -163,10 +163,10 @@ public class OfferDetail extends AppCompatActivity {
 
                             JSONObject images = jsonObject.getJSONObject("image");
 
-                            itemList1.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),false));
+                            itemList1.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value,  String.format(java.util.Locale.US,"%.2f", price) +"$", images.getString("300px"), jsonObject.getString("color"),false));
                         }
                         itemAdapter1.notifyDataSetChanged();
-                        their_info_value.setText("Total Value: " + price_format.format(totalValue) + "$");
+                        their_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
 
                         JSONObject sender = offer.getJSONObject("sender");
 
@@ -208,7 +208,7 @@ public class OfferDetail extends AppCompatActivity {
                             itemList2.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),false));
                         }
                         itemAdapter2.notifyDataSetChanged();
-                        your_info_value.setText("Total Value: " +price_format.format(totalValue) + "$");
+                        your_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
 
 
                         if (!offer.getString("message").equals("") && offer.getString("message") != null) {
@@ -267,7 +267,7 @@ public class OfferDetail extends AppCompatActivity {
                             itemList1.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),false));
                         }
                         itemAdapter1.notifyDataSetChanged();
-                        their_info_value.setText("Total Value: " +price_format.format(totalValue) + "$");
+                        their_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
 
 
                         JSONObject recipient = offer.getJSONObject("recipient");
@@ -309,10 +309,10 @@ public class OfferDetail extends AppCompatActivity {
 
                             JSONObject images = jsonObject.getJSONObject("image");
 
-                            itemList2.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),false));
+                            itemList2.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price)+"$", images.getString("300px"), jsonObject.getString("color"),false));
                         }
                         itemAdapter2.notifyDataSetChanged();
-                        your_info_value.setText("Total Value: " +price_format.format(totalValue) + "$");
+                        your_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
 
                         if (!offer.getString("message").equals("") && offer.getString("message") != null) {
                             message.setVisibility(View.VISIBLE);

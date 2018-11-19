@@ -330,8 +330,6 @@ public class DrawerHistory extends Fragment {
         @Override
         protected void onPostExecute(JSONArray offers) {
 
-            DecimalFormat price_format = new DecimalFormat("0.00");
-
             if (mCallBack != null) {
                 if (offers != null) {
 
@@ -361,7 +359,7 @@ public class DrawerHistory extends Fragment {
                                     recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
                                 }
 
-                                mCallBack.onSuccess(new Offer(jsonObject.getInt("id"), recipient.getString("display_name"),"Your Items ("+sender_items_length.toString()+"): "+ price_format.format(sender_items_price)+ "$", "Their Items ("+recipient_items_length.toString()+"): "+ price_format.format(recipient_items_price)+ "$", recipient.getString("avatar"), jsonObject.getString("state_name")));
+                                mCallBack.onSuccess(new Offer(jsonObject.getInt("id"), recipient.getString("display_name"),"Your Items ("+sender_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", "Their Items ("+recipient_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", recipient_items_price)+ "$", recipient.getString("avatar"), jsonObject.getString("state_name")));
 
                             } catch (JSONException e) {
                                 e.printStackTrace();
@@ -393,7 +391,7 @@ public class DrawerHistory extends Fragment {
                                     recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
                                 }
 
-                                mCallBack.onSuccess(new Offer(jsonObject.getInt("id"), sender.getString("display_name"),"Your Items ("+recipient_items_length.toString()+"): "+ price_format.format(recipient_items_price) +"$", "Their Items ("+sender_items_length.toString()+"): "+ sender_items_price+ "$", sender.getString("avatar"), jsonObject.getString("state_name")));
+                                mCallBack.onSuccess(new Offer(jsonObject.getInt("id"), sender.getString("display_name"),"Your Items ("+recipient_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", recipient_items_price) +"$", "Their Items ("+sender_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", sender.getString("avatar"), jsonObject.getString("state_name")));
 
                             } catch (JSONException e) {
                                 e.printStackTrace();

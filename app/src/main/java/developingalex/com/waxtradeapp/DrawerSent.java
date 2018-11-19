@@ -78,7 +78,7 @@ public class DrawerSent extends Fragment {
                 Intent intent = new Intent(getActivity(), OfferDetail.class);
                 Bundle b = new Bundle();
                 b.putInt("offerId", offerList.get(position).getId()); // Parameter for new Activity
-                b.putBoolean("hideAccept", false);
+                b.putBoolean("hideAccept", true);
                 intent.putExtras(b);
                 startActivity(intent);
             }
@@ -201,8 +201,6 @@ public class DrawerSent extends Fragment {
             DrawerSent activity = activityWeakReference.get();
             activity.offerList.clear();
 
-            DecimalFormat price_format = new DecimalFormat("0.00");
-
             if (offers != null) {
                 for (int i = 0; i < offers.length(); i++) {
                     try {
@@ -230,7 +228,7 @@ public class DrawerSent extends Fragment {
                             recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
                         }
 
-                        activity.offerList.add(new Offer(jsonObject.getInt("id"), recipient.getString("display_name"),"Your Items ("+sender_items_length.toString()+"): "+ price_format.format(sender_items_price)+ "$", "Their Items ("+recipient_items_length.toString()+"): "+ price_format.format(recipient_items_price)+ "$", recipient.getString("avatar"), jsonObject.getString("state_name")));
+                        activity.offerList.add(new Offer(jsonObject.getInt("id"), recipient.getString("display_name"),"Your Items ("+sender_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", "Their Items ("+recipient_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", recipient.getString("avatar"), jsonObject.getString("state_name")));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
