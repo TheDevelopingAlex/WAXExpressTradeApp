@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,8 +33,7 @@ public class myJobService extends JobService {
         sharedPreferences = myJobService.this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
-        if (!sharedPreferences.contains("lastCalled"))
-            editor.putInt("lastCalled", (int) (System.currentTimeMillis() / 1000)).apply();
+        Log.w("myJobScheduler", "Job started");
 
         new myJobService.LongOperation(myJobService.this, new myJobService.OnEventListener() {
             @Override
@@ -166,7 +166,7 @@ public class myJobService extends JobService {
                         JSONObject jsonObject = offers.getJSONObject(index);
                         int timeModified = jsonObject.getInt("time_updated");
 
-                        if (activity.sharedPreferences.getInt("lastCalled", 0) <= timeModified) {
+                        if (timeModified >= activity.sharedPreferences.getInt("lastCalled", (int) (System.currentTimeMillis() / 1000))) {
 
                             switch(jsonObject.getInt("state")) {
                                 case 2: {

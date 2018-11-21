@@ -146,8 +146,13 @@ public class DrawerProfile extends Fragment {
         if (!sharedPreferences.contains("appNotifications")) {
             editor.putBoolean("appNotifications", false).commit();
         } else {
-            if (sharedPreferences.getBoolean("appNotifications", false) && !notificationSwitch.isChecked())
+            if (sharedPreferences.getBoolean("appNotifications", false) && !notificationSwitch.isChecked()) {
+                JobScheduler scheduler = (JobScheduler) getContext().getSystemService(JOB_SCHEDULER_SERVICE);
+                if (!scheduler.getAllPendingJobs().contains(jobID)) {
+                    initializeJob();
+                }
                 notificationSwitch.toggle();
+            }
         }
 
         if (!sharedPreferences.contains("appNotificationsTime"))
@@ -158,10 +163,14 @@ public class DrawerProfile extends Fragment {
             public void onClick(View v) {
                 if (notificationSwitch.isChecked()) {
                     editor.putBoolean("appNotifications", true).apply();
-                    Toast.makeText(getContext(), initializeJob(), Toast.LENGTH_SHORT).show();
+                    if (initializeJob())
+                        Toast.makeText(getContext(),"Notifications ENABLED" , Toast.LENGTH_SHORT).show();
+                    else
+                        Toast.makeText(getContext(),"Notifications ERROR: Can not activate notifications" , Toast.LENGTH_SHORT).show();
                 } else {
                     editor.putBoolean("appNotifications", false).apply();
-                    Toast.makeText(getContext(), cancelJob(), Toast.LENGTH_SHORT).show();
+                    if (cancelJob())
+                        Toast.makeText(getContext(), "Notifications DISABLED", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -177,28 +186,35 @@ public class DrawerProfile extends Fragment {
                 switch(checkedId) {
                     case R.id.radio_1:
                         if (checked)
-                            editor.putInt("appNotificationsTime", 15).apply();
+                            editor.putInt("appNotificationsTime", 15).commit();
                         break;
                     case R.id.radio_2:
                         if (checked)
-                            editor.putInt("appNotificationsTime", 60).apply();
+                            editor.putInt("appNotificationsTime", 60).commit();
                         break;
                     case R.id.radio_3:
                         if (checked)
-                            editor.putInt("appNotificationsTime", 24 * 60).apply();
+                            editor.putInt("appNotificationsTime", 1440).commit();
                         break;
                 }
 
                 if (notificationSwitch.isChecked()) {
-                    cancelJob();
-                    initializeJob();
+                    if (cancelJob()) {
+                        if (initializeJob()) {
+                            int time = sharedPreferences.getInt("appNotificationsTime", 15);
+                            if (time == 1440)
+                                Toast.makeText(getContext(), "Time changed to 24h", Toast.LENGTH_SHORT).show();
+                            else
+                                Toast.makeText(getContext(), "Time changed to " +time+"min", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
             }
         });
 
     }
 
-    private String initializeJob() {
+    private boolean initializeJob() {
         ComponentName componentName = new ComponentName(Objects.requireNonNull(getContext()), myJobService.class);
 
         JobInfo info = new JobInfo.Builder(jobID, componentName)
@@ -210,18 +226,13 @@ public class DrawerProfile extends Fragment {
         JobScheduler scheduler = (JobScheduler) getContext().getSystemService(JOB_SCHEDULER_SERVICE);
         int resultCode = scheduler.schedule(info);
 
-
-        if (resultCode == JobScheduler.RESULT_SUCCESS) {
-            return "Notifications ENABLED";
-        } else {
-            return "Notifications ERROR: Can not activate notifications";
-        }
+        return resultCode == JobScheduler.RESULT_SUCCESS;
     }
 
-    private String cancelJob() {
+    private boolean cancelJob() {
         JobScheduler scheduler = (JobScheduler) Objects.requireNonNull(getContext()).getSystemService(JOB_SCHEDULER_SERVICE);
         scheduler.cancelAll();
-        return "Notifications DISABLED";
+        return true;
     }
 
 }
