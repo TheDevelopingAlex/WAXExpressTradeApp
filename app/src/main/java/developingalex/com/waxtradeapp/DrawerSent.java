@@ -22,7 +22,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -149,6 +148,7 @@ public class DrawerSent extends Fragment {
             public void onSuccess() {
                 adapter.notifyDataSetChanged();
                 swipeRefreshLayout.setRefreshing(false);
+                text.setText("");
             }
 
             @Override
@@ -214,9 +214,8 @@ public class DrawerSent extends Fragment {
                         Integer sender_items_length = sender_items.length();
                         Integer recipient_items_length = recipient_items.length();
 
-
-                        Double sender_items_price = 0.00;
-                        Double recipient_items_price = 0.00;
+                        double sender_items_price = 0.00;
+                        double recipient_items_price = 0.00;
 
                         for (int j = 0; j < sender_items.length(); j++) {
                             JSONObject sender_item = sender_items.getJSONObject(j);
@@ -228,7 +227,7 @@ public class DrawerSent extends Fragment {
                             recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
                         }
 
-                        activity.offerList.add(new Offer(jsonObject.getInt("id"), recipient.getString("display_name"),"Your Items ("+sender_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", "Their Items ("+recipient_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", recipient.getString("avatar"), jsonObject.getString("state_name")));
+                        activity.offerList.add(new Offer(jsonObject.getInt("id"), recipient.getString("display_name"),"Your Items ("+sender_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", "Their Items ("+recipient_items_length.toString()+"): "+ String.format(java.util.Locale.US,"%.2f", recipient_items_price)+ "$", recipient.getString("avatar"), jsonObject.getString("state_name")));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }

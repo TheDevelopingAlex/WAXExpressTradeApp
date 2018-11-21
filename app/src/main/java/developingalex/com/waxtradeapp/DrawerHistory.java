@@ -24,7 +24,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -179,6 +178,7 @@ public class DrawerHistory extends Fragment {
                     offerList.add(offer);
                     adapter.notifyDataSetChanged();
                     swipeRefreshLayout.setRefreshing(false);
+                    mText.setText("");
                 }
 
                 @Override
@@ -276,6 +276,7 @@ public class DrawerHistory extends Fragment {
                     offerList.add(offer);
                     adapter.notifyDataSetChanged();
                     swipeRefreshLayout.setRefreshing(false);
+                    mText.setText("");
                 }
 
                 @Override

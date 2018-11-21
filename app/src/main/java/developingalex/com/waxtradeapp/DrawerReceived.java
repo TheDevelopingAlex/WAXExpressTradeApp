@@ -224,11 +224,13 @@ public class DrawerReceived extends Fragment {
             @Override
             public void onSuccess() {
                 adapter.notifyDataSetChanged();
+                text.setText("");
                 swipeRefreshLayout.setRefreshing(false);
             }
 
             @Override
             public void onFailure() {
+                adapter.notifyDataSetChanged();
                 text.setText(R.string.info_no_offer);
                 swipeRefreshLayout.setRefreshing(false);
             }
