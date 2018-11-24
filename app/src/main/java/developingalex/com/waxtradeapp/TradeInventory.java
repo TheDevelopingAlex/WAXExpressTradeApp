@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -151,8 +152,15 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
                             wear = parts[1];
                             wear = wear.substring(0, wear.length() - 1);
                         } else {
-                            mName = jsonObject.getString("name");
-                            wear = jsonObject.getString("type");
+                            if (jsonObject.has("name"))
+                                mName = jsonObject.getString("name");
+                            else
+                                mName = "";
+
+                            if (jsonObject.has("type"))
+                                wear = jsonObject.getString("type");
+                            else
+                                wear = "";
                         }
 
                         String wear_value;
@@ -162,15 +170,13 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
                             wear_value = "-";
                         }
 
-                        Double price = ((double) jsonObject.getInt("suggested_price") / 100);
-
-                        JSONObject images = jsonObject.getJSONObject("image");
+                        double price = ((double) jsonObject.getInt("suggested_price") / 100);
 
                         if (selectedItems.contains(jsonObject.getString("id"))) {
-                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) + "$", images.getString("300px"), jsonObject.getString("color"), true));
+                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) + "$", getValidImageURL(jsonObject), getValidColor(jsonObject), true));
                             total_value+=price;
                         } else
-                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) +"$", images.getString("300px"), jsonObject.getString("color"),false));
+                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) + "$", getValidImageURL(jsonObject), getValidColor(jsonObject),false));
                     }
 
                     progressBar.setVisibility(View.GONE);
@@ -195,6 +201,33 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
             }
         });
         longOperation2.execute();
+    }
+
+    public static String getValidColor(JSONObject jsonObject) {
+        String color = "#FFFFFF";
+        try {
+            if (jsonObject.getString("color").length() >= 6)
+                color = jsonObject.getString("color");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return color;
+    }
+
+
+    public static String getValidImageURL(JSONObject jsonObject) {
+        String imageURL = "";
+        try {
+            if (jsonObject.getInt("internal_app_id") == 12)
+                imageURL = jsonObject.getString("image");
+            else {
+                JSONObject images = jsonObject.getJSONObject("image");
+                imageURL = images.getString("300px");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return imageURL;
     }
 
 

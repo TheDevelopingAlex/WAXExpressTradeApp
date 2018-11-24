@@ -68,6 +68,8 @@ public class OfferItemAdapter extends RecyclerView.Adapter<OfferItemAdapter.View
         holder.item_price.setText(String.valueOf(offer.getPrice()));
         holder.item_name.setText(offer.getName());
         holder.item_name.setTextColor(Color.parseColor(offer.getItemColor()));
+        holder.item_name.setSelected(true);
+
         holder.item_wear.setText(offer.getWearName());
         holder.item_wear.setTextColor(Color.parseColor(offer.getItemColor()));
         holder.item_wear_value.setText(String.valueOf(offer.getWear()));

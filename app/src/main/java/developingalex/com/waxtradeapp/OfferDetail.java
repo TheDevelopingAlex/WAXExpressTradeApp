@@ -131,15 +131,15 @@ public class OfferDetail extends AppCompatActivity {
                         JSONArray items1 = recipient.getJSONArray("items");
                         their_info.setText("Their Items (" +items1.length() + ")");
 
-                        Double totalValue = 0.00;
+                        double totalValue = 0.00;
 
                         for (int i = 0; i < items1.length(); i++) {
                             JSONObject jsonObject = items1.getJSONObject(i);
 
                             // Split name into weapon_name and weapon_wear
                             String name = jsonObject.getString("name");
-                            String mName;
-                            String wear;
+                            String mName = "";
+                            String wear = "";
 
                             if (name.contains("(")) {
                                 String[] parts = jsonObject.getString("name").split("\\(");
@@ -147,8 +147,11 @@ public class OfferDetail extends AppCompatActivity {
                                 wear = parts[1];
                                 wear = wear.substring(0, wear.length() - 1);
                             } else {
-                                mName = jsonObject.getString("name");
-                                wear = jsonObject.getString("type");
+                                if (jsonObject.has("name"))
+                                    mName = jsonObject.getString("name");
+
+                                if (jsonObject.has("type"))
+                                    wear = jsonObject.getString("type");
                             }
 
                             String wear_value;
@@ -158,12 +161,10 @@ public class OfferDetail extends AppCompatActivity {
                                 wear_value = "-";
                             }
 
-                            Double price = ((double) jsonObject.getInt("suggested_price") / 100);
+                            double price = ((double) jsonObject.getInt("suggested_price") / 100);
                             totalValue+=price;
 
-                            JSONObject images = jsonObject.getJSONObject("image");
-
-                            itemList1.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value,  String.format(java.util.Locale.US,"%.2f", price) +"$", images.getString("300px"), jsonObject.getString("color"),false));
+                            itemList1.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value,  String.format(java.util.Locale.US,"%.2f", price) +"$", getValidImageURL(jsonObject), getValidColor(jsonObject),false));
                         }
                         itemAdapter1.notifyDataSetChanged();
                         their_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
@@ -180,8 +181,8 @@ public class OfferDetail extends AppCompatActivity {
 
                             // Split name into weapon_name and weapon_wear
                             String name = jsonObject.getString("name");
-                            String mName;
-                            String wear;
+                            String mName = "";
+                            String wear = "";
 
                             if (name.contains("(")) {
                                 String[] parts = jsonObject.getString("name").split("\\(");
@@ -189,8 +190,11 @@ public class OfferDetail extends AppCompatActivity {
                                 wear = parts[1];
                                 wear = wear.substring(0, wear.length() - 1);
                             } else {
-                                mName = jsonObject.getString("name");
-                                wear = jsonObject.getString("type");
+                                if (jsonObject.has("name"))
+                                    mName = jsonObject.getString("name");
+
+                                if (jsonObject.has("type"))
+                                    wear = jsonObject.getString("type");
                             }
 
                             String wear_value;
@@ -200,12 +204,10 @@ public class OfferDetail extends AppCompatActivity {
                                 wear_value = "-";
                             }
 
-                            Double price = ((double) jsonObject.getInt("suggested_price") / 100);
+                            double price = ((double) jsonObject.getInt("suggested_price") / 100);
                             totalValue+=price;
 
-                            JSONObject images = jsonObject.getJSONObject("image");
-
-                            itemList2.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),false));
+                            itemList2.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) +"$", getValidImageURL(jsonObject), getValidColor(jsonObject),false));
                         }
                         itemAdapter2.notifyDataSetChanged();
                         your_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
@@ -232,15 +234,15 @@ public class OfferDetail extends AppCompatActivity {
                         JSONArray items1 = sender.getJSONArray("items");
                         their_info.setText("Their Items (" +items1.length() + ")");
 
-                        Double totalValue = 0.00;
+                        double totalValue = 0.00;
 
                         for (int i = 0; i < items1.length(); i++) {
                             JSONObject jsonObject = items1.getJSONObject(i);
 
                             // Split name into weapon_name and weapon_wear
                             String name = jsonObject.getString("name");
-                            String mName;
-                            String wear;
+                            String mName = "";
+                            String wear = "";
 
                             if (name.contains("(")) {
                                 String[] parts = jsonObject.getString("name").split("\\(");
@@ -248,8 +250,11 @@ public class OfferDetail extends AppCompatActivity {
                                 wear = parts[1];
                                 wear = wear.substring(0, wear.length() - 1);
                             } else {
-                                mName = jsonObject.getString("name");
-                                wear = jsonObject.getString("type");
+                                if (jsonObject.has("name"))
+                                    mName = jsonObject.getString("name");
+
+                                if (jsonObject.has("type"))
+                                    wear = jsonObject.getString("type");
                             }
 
                             String wear_value;
@@ -259,12 +264,10 @@ public class OfferDetail extends AppCompatActivity {
                                 wear_value = "-";
                             }
 
-                            Double price = ((double) jsonObject.getInt("suggested_price") / 100);
+                            double price = ((double) jsonObject.getInt("suggested_price") / 100);
                             totalValue+=price;
 
-                            JSONObject images = jsonObject.getJSONObject("image");
-
-                            itemList1.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, price.toString()+"$", images.getString("300px"), jsonObject.getString("color"),false));
+                            itemList1.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) +"$", getValidImageURL(jsonObject), getValidColor(jsonObject),false));
                         }
                         itemAdapter1.notifyDataSetChanged();
                         their_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
@@ -284,8 +287,8 @@ public class OfferDetail extends AppCompatActivity {
 
                             // Split name into weapon_name and weapon_wear
                             String name = jsonObject.getString("name");
-                            String mName;
-                            String wear;
+                            String mName = "";
+                            String wear = "";
 
                             if (name.contains("(")) {
                                 String[] parts = jsonObject.getString("name").split("\\(");
@@ -293,8 +296,11 @@ public class OfferDetail extends AppCompatActivity {
                                 wear = parts[1];
                                 wear = wear.substring(0, wear.length() - 1);
                             } else {
-                                mName = jsonObject.getString("name");
-                                wear = jsonObject.getString("type");
+                                if (jsonObject.has("name"))
+                                    mName = jsonObject.getString("name");
+
+                                if (jsonObject.has("type"))
+                                    wear = jsonObject.getString("type");
                             }
 
                             String wear_value;
@@ -304,12 +310,10 @@ public class OfferDetail extends AppCompatActivity {
                                 wear_value = "-";
                             }
 
-                            Double price = ((double) jsonObject.getInt("suggested_price") / 100);
+                            double price = ((double) jsonObject.getInt("suggested_price") / 100);
                             totalValue+=price;
 
-                            JSONObject images = jsonObject.getJSONObject("image");
-
-                            itemList2.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price)+"$", images.getString("300px"), jsonObject.getString("color"),false));
+                            itemList2.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price)+"$", getValidImageURL(jsonObject), getValidColor(jsonObject),false));
                         }
                         itemAdapter2.notifyDataSetChanged();
                         your_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", totalValue) + "$");
@@ -335,6 +339,34 @@ public class OfferDetail extends AppCompatActivity {
             }
         });
         longOperation.execute();
+    }
+
+
+    public static String getValidColor(JSONObject jsonObject) {
+        String color = "#FFFFFF";
+        try {
+            if (jsonObject.getString("color").length() >= 6)
+                color = jsonObject.getString("color");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return color;
+    }
+
+
+    public static String getValidImageURL(JSONObject jsonObject) {
+        String imageURL = "";
+        try {
+            if (jsonObject.getInt("internal_app_id") == 12)
+                imageURL = jsonObject.getString("image");
+            else {
+                JSONObject images = jsonObject.getJSONObject("image");
+                imageURL = images.getString("300px");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return imageURL;
     }
 
     @Override

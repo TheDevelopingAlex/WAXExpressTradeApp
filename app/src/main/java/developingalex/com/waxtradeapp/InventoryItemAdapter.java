@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,6 +97,7 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
         holder.item_price.setText(String.valueOf(offer.getPrice()));
         holder.item_name.setText(offer.getName());
         holder.item_name.setTextColor(Color.parseColor(offer.getItemColor()));
+        holder.item_name.setSelected(true);
         holder.item_wear.setText(offer.getWearName());
         holder.item_wear.setTextColor(Color.parseColor(offer.getItemColor()));
         holder.item_wear_value.setText(String.valueOf(offer.getWear()));

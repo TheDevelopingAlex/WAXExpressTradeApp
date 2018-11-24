@@ -32,6 +32,7 @@
             android:layout_centerHorizontal="true"
             android:layout_marginTop="-10dp"
             android:contentDescription="@string/desc_itemImage"
+            android:padding="10dp"
             android:scaleType="centerCrop"
             android:src="@drawable/opskin_logo" />
 
@@ -45,7 +46,13 @@
             android:textAllCaps="true"
             android:textColor="@color/colorAccent"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+
+            android:singleLine="true"
+            android:scrollHorizontally="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit ="marquee_forever"
+            />
 
         <TextView
             android:id="@+id/offer_detail_item_wear"
