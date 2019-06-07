@@ -26,10 +26,14 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import developingalex.com.waxtradeapp.lib.OAuth;
+import developingalex.com.waxtradeapp.lib.TradeImplementation;
+import developingalex.com.waxtradeapp.lib.TradeInterface;
+
 public class Trade extends AppCompatActivity {
 
-    private static int ITEMS_TO_SEND = 1;
-    private static int ITEMS_TO_RECEIVE = 2;
+    private final static int ITEMS_TO_SEND = 1;
+    private final static int ITEMS_TO_RECEIVE = 2;
 
     private OAuth oAuth;
     private TradeInterface tradeInterface;
@@ -40,7 +44,6 @@ public class Trade extends AppCompatActivity {
     private ProgressBar progressBar;
     private ImageView userPicReceiver, userPicSender;
     private TextView usernameReceiver, usernameSender, receiver_info, receiver_info_value, sender_info, sender_info_value;
-    private Button addItemsToSend, addItemsToReceive, makeOffer;
     private EditText tradeMessage, twoFactorCode;
 
     private String offer_url, user_id, partnerUsername, partnerAvatar;
@@ -59,7 +62,7 @@ public class Trade extends AppCompatActivity {
         offer_url = b.getString("offer_url");
 
         oAuth = new OAuth(this);
-        tradeInterface = new TradeInterface(this);
+        tradeInterface = new TradeImplementation(this);
         sharedPreferences = this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
@@ -100,7 +103,7 @@ public class Trade extends AppCompatActivity {
         sender_info_value = findViewById(R.id.trade_your_value);
         sender_info_value.setText("0.00$");
 
-        addItemsToSend = findViewById(R.id.trade_add_itemsToSend);
+        final Button addItemsToSend = findViewById(R.id.trade_add_itemsToSend);
         addItemsToSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -113,7 +116,7 @@ public class Trade extends AppCompatActivity {
             }
         });
 
-        addItemsToReceive = findViewById(R.id.trade_add_itemsToReceive);
+        final Button addItemsToReceive = findViewById(R.id.trade_add_itemsToReceive);
         addItemsToReceive.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -126,7 +129,7 @@ public class Trade extends AppCompatActivity {
             }
         });
 
-        makeOffer = findViewById(R.id.trade_make_offer);
+        final Button makeOffer = findViewById(R.id.trade_make_offer);
         tradeMessage = findViewById(R.id.trade_message);
         twoFactorCode = findViewById(R.id.trade_2FA);
 
@@ -288,7 +291,7 @@ public class Trade extends AppCompatActivity {
             mCallBack = callback;
             mUserID = user_id;
             mAppID = app_id;
-            tradeInterface = new TradeInterface(activity);
+            tradeInterface = new TradeImplementation(activity);
         }
 
         @Override

@@ -32,6 +32,11 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import developingalex.com.waxtradeapp.Adapters.OfferItem;
+import developingalex.com.waxtradeapp.Adapters.OfferItemAdapter;
+import developingalex.com.waxtradeapp.lib.TradeImplementation;
+import developingalex.com.waxtradeapp.lib.TradeInterface;
+
 public class OfferDetail extends AppCompatActivity {
 
     private int offerId;
@@ -44,8 +49,6 @@ public class OfferDetail extends AppCompatActivity {
 
     private ProgressDialog progressDialog;
 
-    private RecyclerView mRecyclerViewTop;
-    private RecyclerView mRecyclerViewBot;
     private OfferItemAdapter itemAdapter1;
     private OfferItemAdapter itemAdapter2;
 
@@ -63,7 +66,7 @@ public class OfferDetail extends AppCompatActivity {
         assert b != null;
         offerId = b.getInt("offerId");
 
-        tradeInterface = new TradeInterface(this);
+        tradeInterface = new TradeImplementation(this);
 
         // Init Toolbar
         Toolbar toolbar = findViewById(R.id.offer_detail_toolbar);
@@ -92,11 +95,11 @@ public class OfferDetail extends AppCompatActivity {
         your_info_value = findViewById(R.id.offer_detail_your_value);
 
         // Init RecyclerViews
-        mRecyclerViewTop = findViewById(R.id.offer_detail_RVTop);
+        final RecyclerView mRecyclerViewTop = findViewById(R.id.offer_detail_RVTop);
         mRecyclerViewTop.setHasFixedSize(true);
         mRecyclerViewTop.setLayoutManager(new GridLayoutManager(OfferDetail.this, 1, GridLayoutManager.HORIZONTAL, false));
 
-        mRecyclerViewBot = findViewById(R.id.offer_detail_RVBot);
+        final RecyclerView mRecyclerViewBot = findViewById(R.id.offer_detail_RVBot);
         mRecyclerViewBot.setHasFixedSize(true);
         mRecyclerViewBot.setLayoutManager(new GridLayoutManager(OfferDetail.this, 1, GridLayoutManager.HORIZONTAL, false));
 
@@ -391,7 +394,7 @@ public class OfferDetail extends AppCompatActivity {
         LongOperation(Activity activity, Integer offer_id, OnEventListener callback) {
             this.offer_id = offer_id;
             mCallBack = callback;
-            tradeInterface = new TradeInterface(activity);
+            tradeInterface = new TradeImplementation(activity);
         }
 
         @Override

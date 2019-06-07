@@ -22,6 +22,9 @@ import org.json.JSONObject;
 import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
 
+import developingalex.com.waxtradeapp.lib.TradeImplementation;
+import developingalex.com.waxtradeapp.lib.TradeInterface;
+
 public class myJobService extends JobService {
 
     private static final String CHANNEL_ID = "WAXTradeNotification";
@@ -113,7 +116,7 @@ public class myJobService extends JobService {
 
         LongOperation(myJobService activity, myJobService.OnEventListener callback) {
             activityWeakReference = new WeakReference<>(activity);
-            tradeInterface = new TradeInterface(activity);
+            tradeInterface = new TradeImplementation(activity);
             mCallBack = callback;
         }
 

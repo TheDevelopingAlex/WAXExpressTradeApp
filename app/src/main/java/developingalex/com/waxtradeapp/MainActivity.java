@@ -11,6 +11,9 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import developingalex.com.waxtradeapp.lib.ChromeCustomTab;
+import developingalex.com.waxtradeapp.lib.OAuth;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private CardView loginButton;
     private ProgressBar progressBar;
 
-    private String code, state;
+    private String code;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,21 +37,21 @@ public class MainActivity extends AppCompatActivity {
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK); // clears all previous activities task
             startActivity(intent);
             finish(); // destroy current activity
+        } else {
+            chromeCustomTab = new ChromeCustomTab(this, oAuth.getURL());
+            chromeCustomTab.warmup();
+            chromeCustomTab.mayLaunch();
+
+            progressBar = findViewById(R.id.loginProgress);
+
+            loginButton = findViewById(R.id.loginButton);
+            loginButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(chromeCustomTab.createCustomTab());
+                }
+            });
         }
-
-        chromeCustomTab = new ChromeCustomTab(this, oAuth.getURL());
-        chromeCustomTab.warmup();
-        chromeCustomTab.mayLaunch();
-
-        progressBar = findViewById(R.id.loginProgress);
-
-        loginButton = findViewById(R.id.loginButton);
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(chromeCustomTab.createCustomTab());
-            }
-        });
     }
 
     @Override
@@ -56,12 +59,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        Uri uri = getIntent().getData();
+        final Uri uri = getIntent().getData();
 
         if (uri != null && uri.toString().startsWith(oAuth.getRedirectUri())) {
 
             code = uri.getQueryParameter("code");
-            state = uri.getQueryParameter("state");
 
             if (code != null) {
 
@@ -72,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         try {
-                            if (oAuth.accountSetup(code, state)) {
+                            if (oAuth.accountSetup(code)) {
                                 Intent intent = new Intent(MainActivity.this, TradeArea.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK); // clears all previous activities task
@@ -93,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
                 }).start();
 
             } else {
-
                 loginButton.setVisibility(View.VISIBLE);
                 progressBar.setVisibility(View.INVISIBLE);
 
@@ -106,17 +107,15 @@ public class MainActivity extends AppCompatActivity {
                     AlertDialog alertDialog = alertDialogBuilder.create();
                     alertDialog.show();
                 }
-
             }
-
         }
-
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        chromeCustomTab.unbindCustomTabsService();
+        if (chromeCustomTab != null)
+            chromeCustomTab.unbindCustomTabsService();
     }
 
 }

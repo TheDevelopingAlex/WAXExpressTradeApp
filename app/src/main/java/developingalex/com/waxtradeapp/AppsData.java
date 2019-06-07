@@ -2,7 +2,7 @@ package developingalex.com.waxtradeapp;
 
 public class AppsData {
 
-    String app_text, app_image;
+    private String app_text, app_image;
 
     public AppsData(String app_text, String app_image){
         this.app_text = app_text;

@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +25,12 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import developingalex.com.waxtradeapp.Adapters.InventoryItemAdapter;
+import developingalex.com.waxtradeapp.Adapters.OfferItem;
+import developingalex.com.waxtradeapp.Adapters.SpinnerAdapter;
+import developingalex.com.waxtradeapp.lib.TradeImplementation;
+import developingalex.com.waxtradeapp.lib.TradeInterface;
 
 public class TradeInventory extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
@@ -262,7 +267,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
 
         LongOperation(Activity activity, TradeInventory.OnEventListener callback) {
             mCallBack = callback;
-            tradeInterface = new TradeInterface(activity);
+            tradeInterface = new TradeImplementation(activity);
         }
 
         @Override
@@ -310,7 +315,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
             mCallBack = callback;
             mUserID = user_id;
             mAppID = app_id;
-            tradeInterface = new TradeInterface(activity);
+            tradeInterface = new TradeImplementation(activity);
         }
 
         @Override

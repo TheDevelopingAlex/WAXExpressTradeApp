@@ -21,6 +21,12 @@ import android.widget.Toast;
 import com.karan.churi.PermissionManager.PermissionManager;
 import com.squareup.picasso.Picasso;
 
+import developingalex.com.waxtradeapp.DrawerViews.DrawerHistory;
+import developingalex.com.waxtradeapp.DrawerViews.DrawerProfile;
+import developingalex.com.waxtradeapp.DrawerViews.DrawerReceived;
+import developingalex.com.waxtradeapp.DrawerViews.DrawerSent;
+import developingalex.com.waxtradeapp.lib.OAuth;
+
 public class TradeArea extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private OAuth oAuth;
@@ -38,26 +44,26 @@ public class TradeArea extends AppCompatActivity implements NavigationView.OnNav
         permissionManager = new PermissionManager() {};
         permissionManager.checkAndRequestPermissions(this);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
+        final FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-            Intent intent = new Intent(TradeArea.this, CreateOffer.class);
+            final Intent intent = new Intent(TradeArea.this, CreateOffer.class);
             startActivity(intent);
             }
         });
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+        final DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         setTitle("Received");
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        final NavigationView navigationView = findViewById(R.id.nav_view);
 
         getSupportFragmentManager().beginTransaction().replace(R.id.content_trade_area, new DrawerReceived()).commit();
         navigationView.setCheckedItem(R.id.nav_received);
@@ -67,26 +73,26 @@ public class TradeArea extends AppCompatActivity implements NavigationView.OnNav
         progressDialog = new ProgressDialog(this);
 
         // SET USER PROFILE PICTURE
-        View headView = navigationView.getHeaderView(0);
-        ImageView profilePic = headView.findViewById(R.id.user_profile_picture);
+        final View headView = navigationView.getHeaderView(0);
+        final ImageView profilePic = headView.findViewById(R.id.user_profile_picture);
         Picasso.get()
                 .load(oAuth.getUserProfilePicture())
                 .error(R.drawable.opskins_logo_avatar)
                 .into(profilePic);
 
         // SET USER USERNAME
-        TextView profileUsername = headView.findViewById(R.id.user_profile_username);
+        final TextView profileUsername = headView.findViewById(R.id.user_profile_username);
         profileUsername.setText(oAuth.getUserProfileUsername());
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         permissionManager.checkResult(requestCode, permissions, grantResults);
     }
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        final DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
             return;
@@ -110,11 +116,10 @@ public class TradeArea extends AppCompatActivity implements NavigationView.OnNav
     }
 
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
+        final int id = item.getItemId();
 
         if (id == R.id.nav_sent) {
             setTitle("Sent");
@@ -168,7 +173,7 @@ public class TradeArea extends AppCompatActivity implements NavigationView.OnNav
 
         }
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        final DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }

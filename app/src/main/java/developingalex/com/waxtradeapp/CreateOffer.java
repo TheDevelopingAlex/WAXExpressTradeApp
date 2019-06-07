@@ -25,21 +25,20 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import developingalex.com.waxtradeapp.Adapters.RecentTradePartners;
+import developingalex.com.waxtradeapp.Adapters.RecentTradePartnersAdapter;
+import developingalex.com.waxtradeapp.lib.OAuth;
+
 public class CreateOffer extends AppCompatActivity {
 
     private OAuth oAuth;
-    private SharedPreferences sharedPreferences;
 
-    private CardView loginButton, startTrading;
     private ProgressBar qrCodeInit;
     private TextView qrCodeText;
     private ImageView qrCodeIcon;
     private EditText tradeURL;
 
-    private JSONArray partners;
     private ArrayList<RecentTradePartners> recentPartners = new ArrayList<>();
-    private RecyclerView recentTradePartnersRecyclerView;
-    private RecentTradePartnersAdapter adapter;
 
     private int QR_CAMERA_REQUEST_CODE = 123;
 
@@ -49,7 +48,7 @@ public class CreateOffer extends AppCompatActivity {
         setContentView(R.layout.activity_create_offer);
 
         oAuth = new OAuth(this);
-        sharedPreferences = this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
+        final SharedPreferences sharedPreferences = this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
 
         setTitle("New Offer");
 
@@ -57,16 +56,16 @@ public class CreateOffer extends AppCompatActivity {
         tradeURL = findViewById(R.id.tradeURLInput);
 
         // Recent trade partners
-        recentTradePartnersRecyclerView = findViewById(R.id.recentTradePartnersRecyclerView);
+        final RecyclerView recentTradePartnersRecyclerView = findViewById(R.id.recentTradePartnersRecyclerView);
         recentTradePartnersRecyclerView.setHasFixedSize(true);
         recentTradePartnersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new RecentTradePartnersAdapter(this, recentPartners);
+        final RecentTradePartnersAdapter adapter = new RecentTradePartnersAdapter(this, recentPartners);
         recentTradePartnersRecyclerView.setAdapter(adapter);
 
         if (sharedPreferences.contains("recentTradePartners")) {
             try {
-                partners = new JSONArray(sharedPreferences.getString("recentTradePartners", null));
+                final JSONArray partners = new JSONArray(sharedPreferences.getString("recentTradePartners", null));
                 for (int i = 0; i < partners.length(); i++) {
                     recentPartners.add(new RecentTradePartners(partners.getJSONObject(i).getString("username"), partners.getJSONObject(i).getString("avatar"), partners.getJSONObject(i).getString("tradeURL")));
                 }
@@ -93,7 +92,7 @@ public class CreateOffer extends AppCompatActivity {
         qrCodeText = findViewById(R.id.startQRCodeScannerText);
         qrCodeIcon = findViewById(R.id.startQRCodeScannerIcon);
 
-        loginButton = findViewById(R.id.startQRCodeScanner);
+        final CardView loginButton = findViewById(R.id.startQRCodeScanner);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -106,7 +105,7 @@ public class CreateOffer extends AppCompatActivity {
         });
 
 
-        startTrading = findViewById(R.id.startTrading);
+        final CardView startTrading = findViewById(R.id.startTrading);
         startTrading.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -23,7 +23,6 @@ import java.util.Objects;
 
 public class CreateOfferCamera extends AppCompatActivity {
 
-    private BarcodeDetector barcodeDetector;
     private CameraSource cameraSource;
 
     @Override
@@ -31,7 +30,7 @@ public class CreateOfferCamera extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_offer_camera);
 
-        Toolbar toolbar = findViewById(R.id.offer_create_toolbar_camera);
+        final Toolbar toolbar = findViewById(R.id.offer_create_toolbar_camera);
         // Adds Back-Arrow to Toolbar
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
@@ -39,12 +38,12 @@ public class CreateOfferCamera extends AppCompatActivity {
 
         setTitle("Scan a QR-Code");
 
-        barcodeDetector = new BarcodeDetector.Builder(CreateOfferCamera.this)
+        final BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(CreateOfferCamera.this)
                 .setBarcodeFormats(Barcode.QR_CODE)
                 .build();
 
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
+        final Display display = getWindowManager().getDefaultDisplay();
+        final Point size = new Point();
         display.getSize(size);
 
         cameraSource = new CameraSource.Builder(CreateOfferCamera.this, barcodeDetector)
@@ -104,7 +103,6 @@ public class CreateOfferCamera extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
             }
 
             @Override
