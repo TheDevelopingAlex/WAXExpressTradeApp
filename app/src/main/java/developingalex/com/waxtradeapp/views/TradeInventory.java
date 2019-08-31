@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp;
+package developingalex.com.waxtradeapp.views;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -23,14 +23,16 @@ import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-import developingalex.com.waxtradeapp.Adapters.InventoryItemAdapter;
-import developingalex.com.waxtradeapp.Adapters.OfferItem;
-import developingalex.com.waxtradeapp.Adapters.SpinnerAdapter;
+import developingalex.com.waxtradeapp.R;
+import developingalex.com.waxtradeapp.adapters.InventoryItemAdapter;
+import developingalex.com.waxtradeapp.interfaces.ItemClickListener;
+import developingalex.com.waxtradeapp.adapters.SpinnerAdapter;
 import developingalex.com.waxtradeapp.lib.TradeImplementation;
-import developingalex.com.waxtradeapp.lib.TradeInterface;
+import developingalex.com.waxtradeapp.interfaces.TradeInterface;
+import developingalex.com.waxtradeapp.objects.AppsData;
+import developingalex.com.waxtradeapp.objects.StandardItem;
 
 public class TradeInventory extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
@@ -41,11 +43,11 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
     private Spinner apps_dropdown;
     private RecyclerView mRecyclerView;
     private InventoryItemAdapter itemAdapter;
-    private ArrayList<OfferItem> itemList = new ArrayList<>();
+    private ArrayList<StandardItem> itemList = new ArrayList<>();
 
     private ArrayList<AppsData> apps_list = new ArrayList<>();
-    private List<Integer> apps_list_id = new ArrayList<>();
-    private ArrayList<String> selectedItems = new ArrayList<>();
+    private ArrayList<Integer> apps_list_id = new ArrayList<>();
+    private ArrayList<Integer> selectedItems = new ArrayList<>();
     private double total_value = 0.00;
 
     @Override
@@ -53,13 +55,13 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.trade_inventory);
 
-        Bundle b = getIntent().getExtras();
+        final Bundle b = getIntent().getExtras();
         assert b != null;
         user_id = b.getString("user_id");
-        selectedItems = b.getStringArrayList("selectedItems");
+        selectedItems = b.getIntegerArrayList("selectedItems");
 
         // Init Toolbar
-        Toolbar toolbar = findViewById(R.id.trade_inventory_toolbar);
+        final Toolbar toolbar = findViewById(R.id.trade_inventory_toolbar);
         toolbar.setTitle("Inventory");
 
         // Adds Back-Arrow to Toolbar
@@ -80,26 +82,32 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         itemAdapter = new InventoryItemAdapter(this, itemList);
         mRecyclerView.setAdapter(itemAdapter);
 
-        itemAdapter.setOnItemClickListener(new InventoryItemAdapter.OnItemClickListener() {
+        itemAdapter.setOnItemClickListener(new ItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                if (selectedItems.contains(itemList.get(position).getItemID())) {
-                    selectedItems.remove(itemList.get(position).getItemID());
+                if (selectedItems.contains(itemList.get(position).getId())) {
+                    selectedItems.remove(itemList.get(position).getId());
                     itemAdapter.toggleItemActive(position);
-                    String price = itemList.get(position).getPrice().replace("$","");
-                    total_value -= Double.valueOf(price);
+                    total_value -= itemList.get(position).getSuggested_price();
                 } else {
-                    selectedItems.add(itemList.get(position).getItemID());
+                    selectedItems.add(itemList.get(position).getId());
                     itemAdapter.toggleItemActive(position);
-                    String price = itemList.get(position).getPrice().replace("$","");
-                    total_value += Double.valueOf(price);
+                    total_value += itemList.get(position).getSuggested_price();
                 }
+            }
+
+            @Override
+            public void onAcceptClick(int position) {
+            }
+
+            @Override
+            public void onDeclineClick(int position) {
             }
         });
 
 
-        // get all apps from opskins
-        LongOperation longOperation = new LongOperation(this, new OnEventListener() {
+        // get all apps from OPSkins
+        new AppsFetcher(this, new OnEventListener() {
             @Override
             public void onSuccess(JSONArray apps) {
                 try {
@@ -122,8 +130,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
             public void onFailure(String text) {
                 Toast.makeText(TradeInventory.this, text, Toast.LENGTH_SHORT).show();
             }
-        });
-        longOperation.execute();
+        }).execute();
     }
 
 
@@ -133,10 +140,9 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         emptyInventory.setVisibility(View.INVISIBLE);
         mRecyclerView.setVisibility(View.INVISIBLE);
 
-        LongOperation2 longOperation2 = new LongOperation2(this, user_id, app_id, new OnEventListener2() {
+        new InventoryFetcher(this, user_id, app_id, new OnEventListener2() {
             @Override
             public void onSuccess(JSONObject response) {
-                DecimalFormat precision = new DecimalFormat("0.00000");
 
                 try {
 
@@ -144,44 +150,41 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
                     itemList.clear();
 
                     for (int i = 0; i < items.length(); i++) {
-                        JSONObject jsonObject = items.getJSONObject(i);
+                        JSONObject item = items.getJSONObject(i);
 
-                        // Split name into weapon_name and weapon_wear
-                        String name = jsonObject.getString("name");
-                        String mName;
-                        String wear;
+                        itemList.add(
+                                new StandardItem(
+                                        item.has("id") && !item.isNull("id") ? item.getInt("id") : -1,
+                                        item.has("internal_app_id") && !item.isNull("internal_app_id") ? item.getInt("internal_app_id") : -1,
+                                        item.has("def_id") && !item.isNull("def_id") ? item.getInt("def_id") : -1,
+                                        item.has("sku") && !item.isNull("sku") ? item.getInt("sku") : -1,
+                                        item.has("wear") && !item.isNull("wear") ? item.getDouble("wear") : 0.0,
+                                        item.getBoolean("tradable"),
+                                        item.getBoolean("is_trade_restricted"),
+                                        item.has("trade_hold_expires") && !item.isNull("trade_hold_expires") ? item.getInt("trade_hold_expires") : 0,
+                                        item.has("name") && !item.isNull("name") ? item.getString("name") : "",
+                                        item.has("market_name") && !item.isNull("market_name") ? item.getString("market_name") : "",
+                                        item.has("category") && !item.isNull("category") ? item.getString("category") : "",
+                                        item.has("rarity") && !item.isNull("rarity") ? item.getString("rarity") : "",
+                                        item.has("type") && !item.isNull("type") ? item.getString("type") : "",
+                                        item.has("color") && !item.isNull("color") ? item.getString("color") : "",
+                                        item.has("image") && !item.isNull("image") ? item.get("image") : null,
+                                        item.has("suggested_price") && !item.isNull("suggested_price") ? item.getInt("suggested_price") : 0,
+                                        item.has("suggested_price_floor") && !item.isNull("suggested_price_floor") ? item.getInt("suggested_price_floor") : 0,
+                                        item.getBoolean("instant_sell_enabled"),
+                                        item.has("preview_urls") && !item.isNull("preview_urls") ? item.get("preview_urls") : null,
+                                        item.has("assets") && !item.isNull("assets") ? item.get("assets") : null,
+                                        item.has("inspect") && !item.isNull("inspect") ? item.getString("inspect") : "",
+                                        item.has("eth_inspect") && !item.isNull("eth_inspect") ? item.getString("eth_inspect") : "",
+                                        item.has("pattern_index") && !item.isNull("pattern_index") ? item.getInt("pattern_index") : 0,
+                                        item.has("paint_index") && !item.isNull("paint_index") ? item.getInt("paint_index") : 0,
+                                        item.has("wear_tier_index") && !item.isNull("wear_tier_index") ? item.getInt("wear_tier_index") : 0,
+                                        item.has("time_created") && !item.isNull("time_created") ? item.getInt("time_created") : 0,
+                                        item.has("time_updated") && !item.isNull("time_updated") ? item.getInt("time_updated") : 0,
+                                        item.has("attributes") && !item.isNull("attributes") ? item.get("attributes") : null
+                                )
+                        );
 
-                        if (name.contains("(")) {
-                            String[] parts = jsonObject.getString("name").split("\\(");
-                            mName = parts[0];
-                            wear = parts[1];
-                            wear = wear.substring(0, wear.length() - 1);
-                        } else {
-                            if (jsonObject.has("name"))
-                                mName = jsonObject.getString("name");
-                            else
-                                mName = "";
-
-                            if (jsonObject.has("type"))
-                                wear = jsonObject.getString("type");
-                            else
-                                wear = "";
-                        }
-
-                        String wear_value;
-                        if (!jsonObject.getString("wear").equals("null")) {
-                            wear_value = precision.format(jsonObject.getDouble("wear"));
-                        } else {
-                            wear_value = "-";
-                        }
-
-                        double price = ((double) jsonObject.getInt("suggested_price") / 100);
-
-                        if (selectedItems.contains(jsonObject.getString("id"))) {
-                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) + "$", getValidImageURL(jsonObject), getValidColor(jsonObject), true));
-                            total_value+=price;
-                        } else
-                            itemList.add(new OfferItem(jsonObject.getString("id"), mName, wear, wear_value, String.format(java.util.Locale.US,"%.2f", price) + "$", getValidImageURL(jsonObject), getValidColor(jsonObject),false));
                     }
 
                     progressBar.setVisibility(View.GONE);
@@ -204,37 +207,8 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
             public void onFailure(String text) {
                 Toast.makeText(TradeInventory.this, text, Toast.LENGTH_SHORT).show();
             }
-        });
-        longOperation2.execute();
+        }).execute();
     }
-
-    public static String getValidColor(JSONObject jsonObject) {
-        String color = "#FFFFFF";
-        try {
-            if (jsonObject.getString("color").length() >= 6)
-                color = jsonObject.getString("color");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return color;
-    }
-
-
-    public static String getValidImageURL(JSONObject jsonObject) {
-        String imageURL = "";
-        try {
-            if (jsonObject.getInt("internal_app_id") == 12)
-                imageURL = jsonObject.getString("image");
-            else {
-                JSONObject images = jsonObject.getJSONObject("image");
-                imageURL = images.getString("300px");
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return imageURL;
-    }
-
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -260,12 +234,12 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
     }
 
     // Long Operation ASYNC Task class
-    private static class LongOperation extends AsyncTask<String, Void, JSONArray> {
+    private static class AppsFetcher extends AsyncTask<String, Void, JSONArray> {
 
         private TradeInventory.OnEventListener mCallBack;
         private TradeInterface tradeInterface;
 
-        LongOperation(Activity activity, TradeInventory.OnEventListener callback) {
+        AppsFetcher(Activity activity, TradeInventory.OnEventListener callback) {
             mCallBack = callback;
             tradeInterface = new TradeImplementation(activity);
         }
@@ -303,7 +277,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
     }
 
     // Long Operation ASYNC Task class
-    private static class LongOperation2 extends AsyncTask<String, Void, JSONObject> {
+    private static class InventoryFetcher extends AsyncTask<String, Void, JSONObject> {
 
         private TradeInventory.OnEventListener2 mCallBack;
         private TradeInterface tradeInterface;
@@ -311,7 +285,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         private String mUserID;
         private Integer mAppID;
 
-        LongOperation2(Activity activity, String user_id, Integer app_id, TradeInventory.OnEventListener2 callback) {
+        InventoryFetcher(Activity activity, String user_id, Integer app_id, TradeInventory.OnEventListener2 callback) {
             mCallBack = callback;
             mUserID = user_id;
             mAppID = app_id;
@@ -342,7 +316,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
                 if (response != null)
                     mCallBack.onSuccess(response);
                 else
-                    mCallBack.onFailure("Invalid Apps, please try again!");
+                    mCallBack.onFailure("Failed loading Inventory, please try again!");
             }
 
         }

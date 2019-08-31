@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp;
+package developingalex.com.waxtradeapp.views;
 
 import android.app.Activity;
 import android.content.Context;
@@ -25,20 +25,22 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import developingalex.com.waxtradeapp.Adapters.RecentTradePartners;
-import developingalex.com.waxtradeapp.Adapters.RecentTradePartnersAdapter;
-import developingalex.com.waxtradeapp.lib.OAuth;
+import developingalex.com.waxtradeapp.R;
+import developingalex.com.waxtradeapp.interfaces.ItemClickListener;
+import developingalex.com.waxtradeapp.objects.RecentTradePartners;
+import developingalex.com.waxtradeapp.adapters.RecentTradePartnersAdapter;
+import developingalex.com.waxtradeapp.lib.OAuthImplementation;
 
 public class CreateOffer extends AppCompatActivity {
 
-    private OAuth oAuth;
+    private OAuthImplementation oAuthImplementation;
 
     private ProgressBar qrCodeInit;
     private TextView qrCodeText;
     private ImageView qrCodeIcon;
     private EditText tradeURL;
 
-    private ArrayList<RecentTradePartners> recentPartners = new ArrayList<>();
+    private final ArrayList<RecentTradePartners> recentPartners = new ArrayList<>();
 
     private int QR_CAMERA_REQUEST_CODE = 123;
 
@@ -47,12 +49,12 @@ public class CreateOffer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_offer);
 
-        oAuth = new OAuth(this);
+        oAuthImplementation = new OAuthImplementation(this);
         final SharedPreferences sharedPreferences = this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
 
         setTitle("New Offer");
 
-        Toolbar toolbar = findViewById(R.id.offer_create_toolbar);
+        final Toolbar toolbar = findViewById(R.id.offer_create_toolbar);
         tradeURL = findViewById(R.id.tradeURLInput);
 
         // Recent trade partners
@@ -76,11 +78,17 @@ public class CreateOffer extends AppCompatActivity {
         }
         adapter.notifyDataSetChanged();
 
-        adapter.setOnItemClickListener(new RecentTradePartnersAdapter.OnItemClickListener() {
+        adapter.setOnItemClickListener(new ItemClickListener() {
             @Override
             public void onItemClick(int position) {
                 tradeURL.setText(recentPartners.get(position).getTradeURL());
             }
+
+            @Override
+            public void onAcceptClick(int ignore) { }
+
+            @Override
+            public void onDeclineClick(int ignore) { }
         });
 
         // Adds Back-Arrow to Toolbar
@@ -109,18 +117,18 @@ public class CreateOffer extends AppCompatActivity {
         startTrading.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(CreateOffer.this, Trade.class);
+                final Intent intent = new Intent(CreateOffer.this, Trade.class);
+                final String regex = "^(http://|https://)?(www.)?([a-zA-Z0-9]+).[a-zA-Z0-9]*.[a-z].?([a-z]+)?.(t).?([0-9])?.([0-9]){6}.([a-zA-Z0-9]){8}$";
 
-                String regex = "^(http://|https://)?(www.)?([a-zA-Z0-9]+).[a-zA-Z0-9]*.[a-z].?([a-z]+)?.(t).?([0-9])?.([0-9]){6}.([a-zA-Z0-9]){8}$";
                 if (tradeURL.getText().toString().matches((regex))) {
                     try {
-                        String[] temp = tradeURL.getText().toString().split("/");
-                        String user_id = temp[4];
+                        final String[] temp = tradeURL.getText().toString().split("/");
+                        final String user_id = temp[4];
 
-                        if (oAuth.getUserID().equals(user_id)) {
+                        if (oAuthImplementation.getUserID().equals(user_id)) {
                             Toast.makeText(CreateOffer.this, "You can't trade with yourself!", Toast.LENGTH_SHORT).show();
                         } else {
-                            Bundle b = new Bundle();
+                            final Bundle b = new Bundle();
                             b.putString("offer_url", tradeURL.getText().toString()); // Parameter for new Activity
                             b.putString("user_id", user_id); // Parameter for new Activity
                             intent.putExtras(b);
@@ -149,7 +157,7 @@ public class CreateOffer extends AppCompatActivity {
             if (resultCode == Activity.RESULT_OK) {
                 try {
                     assert data != null;
-                    String link = Objects.requireNonNull(data.getExtras()).getString("tradeURL");
+                    final String link = Objects.requireNonNull(data.getExtras()).getString("tradeURL");
                     tradeURL.setText(link);
                 } catch (Exception e) {
                     e.printStackTrace();

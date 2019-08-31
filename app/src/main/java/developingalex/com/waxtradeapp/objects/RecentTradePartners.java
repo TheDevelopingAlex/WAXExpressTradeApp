@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp.Adapters;
+package developingalex.com.waxtradeapp.objects;
 
 public class RecentTradePartners {
 
@@ -10,11 +10,11 @@ public class RecentTradePartners {
         this.tradeURL = tradeURL;
     }
 
-    String getUsername() {
+    public String getUsername() {
         return username;
     }
 
-    String getAvatar() {
+    public String getAvatar() {
         return avatar;
     }
 

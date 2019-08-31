@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp.DrawerViews;
+package developingalex.com.waxtradeapp.views.drawerViews;
 
 import android.app.ProgressDialog;
 import android.app.job.JobInfo;
@@ -36,14 +36,14 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import developingalex.com.waxtradeapp.R;
-import developingalex.com.waxtradeapp.lib.OAuth;
-import developingalex.com.waxtradeapp.myJobService;
+import developingalex.com.waxtradeapp.lib.OAuthImplementation;
+import developingalex.com.waxtradeapp.lib.MyJobService;
 
 import static android.content.Context.JOB_SCHEDULER_SERVICE;
 
 public class DrawerProfile extends Fragment {
 
-    private OAuth oAuth;
+    private OAuthImplementation oAuthImplementation;
     private SharedPreferences sharedPreferences;
 
     private final String mTradeURL = "Not Found";
@@ -64,7 +64,7 @@ public class DrawerProfile extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, Bundle savedInstanceState) {
 
-        oAuth = new OAuth(view.getContext());
+        oAuthImplementation = new OAuthImplementation(view.getContext());
 
         sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
 
@@ -85,7 +85,7 @@ public class DrawerProfile extends Fragment {
             @Override
             public void run() {
                 try {
-                    final String tradeURL = oAuth.getUserTradeURL();
+                    final String tradeURL = oAuthImplementation.getUserTradeURL();
                     if (tradeURL != null) {
 
                         final MultiFormatWriter multiFormatWriter = new MultiFormatWriter();
@@ -113,11 +113,11 @@ public class DrawerProfile extends Fragment {
                         public void run() {
                             // set user infos
                             Picasso.get()
-                                    .load(oAuth.getUserProfilePicture())
+                                    .load(oAuthImplementation.getUserProfilePicture())
                                     .error(R.drawable.opskins_logo_avatar)
                                     .into(userProfilePicture);
 
-                            userProfileName.setText(oAuth.getUserProfileUsername());
+                            userProfileName.setText(oAuthImplementation.getUserProfileUsername());
 
                             content.setVisibility(View.VISIBLE);
                             progressDialog.dismiss();
@@ -151,8 +151,9 @@ public class DrawerProfile extends Fragment {
         } else {
             if (sharedPreferences.getBoolean("appNotifications", false) && !notificationSwitch.isChecked()) {
                 final JobScheduler scheduler = (JobScheduler) getContext().getSystemService(JOB_SCHEDULER_SERVICE);
-                if (!scheduler.getAllPendingJobs().contains(jobID))
+                if (!scheduler.getAllPendingJobs().contains(jobID)) {
                     initializeJob();
+                }
                 notificationSwitch.toggle();
             }
         }
@@ -216,7 +217,7 @@ public class DrawerProfile extends Fragment {
     }
 
     private boolean initializeJob() {
-        final ComponentName componentName = new ComponentName(Objects.requireNonNull(getContext()), myJobService.class);
+        final ComponentName componentName = new ComponentName(Objects.requireNonNull(getContext()), MyJobService.class);
 
         final JobInfo info = new JobInfo.Builder(jobID, componentName)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)

@@ -1,9 +1,8 @@
-package developingalex.com.waxtradeapp.DrawerViews;
+package developingalex.com.waxtradeapp.views.drawerViews;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -11,26 +10,27 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import developingalex.com.waxtradeapp.Adapters.Offer;
-import developingalex.com.waxtradeapp.Adapters.OfferAdapter;
-import developingalex.com.waxtradeapp.OfferDetail;
+import developingalex.com.waxtradeapp.interfaces.OfferListener;
+import developingalex.com.waxtradeapp.lib.AsyncOfferLoader;
+import developingalex.com.waxtradeapp.objects.Offer;
+import developingalex.com.waxtradeapp.adapters.OfferAdapter;
+import developingalex.com.waxtradeapp.interfaces.ItemClickListener;
+import developingalex.com.waxtradeapp.objects.StandardItem;
+import developingalex.com.waxtradeapp.objects.StandardTradeOffer;
+import developingalex.com.waxtradeapp.views.OfferDetail;
 import developingalex.com.waxtradeapp.R;
 import developingalex.com.waxtradeapp.lib.TradeImplementation;
-import developingalex.com.waxtradeapp.lib.TradeInterface;
+import developingalex.com.waxtradeapp.interfaces.TradeInterface;
 
 public class DrawerSent extends Fragment {
 
@@ -77,7 +77,7 @@ public class DrawerSent extends Fragment {
 
         adapter.acceptButtonVisibility(false);
 
-        adapter.setOnItemClickListener(new OfferAdapter.OnItemClickListener() {
+        adapter.setOnItemClickListener(new ItemClickListener() {
             @Override
             public void onItemClick(int position) {
                 Intent intent = new Intent(getActivity(), OfferDetail.class);
@@ -149,100 +149,53 @@ public class DrawerSent extends Fragment {
     private void loadOffers() {
         // Start requesting offers from API in background
         swipeRefreshLayout.setRefreshing(true);
-        new LongOperation(DrawerSent.this, new OnEventListener() {
-            @Override
-            public void onSuccess() {
-                adapter.notifyDataSetChanged();
-                swipeRefreshLayout.setRefreshing(false);
-                text.setText("");
-            }
 
-            @Override
-            public void onFailure() {
-                adapter.notifyDataSetChanged();
-                swipeRefreshLayout.setRefreshing(false);
-                text.setText(R.string.info_no_offer);
-            }
+        new AsyncOfferLoader(getContext(), "sent", "2", "created",
+                new OfferListener() {
+                    @Override
+                    public void onSuccess(ArrayList<StandardTradeOffer> offers) {
+
+                        for (int i = 0; i < offers.size(); i++) {
+                            StandardTradeOffer offer = offers.get(i);
+
+                            offerList.add(
+                                    new Offer(
+                                            offer.getId(),
+                                            offer.getRecipient().getDisplay_name(),
+                                            "Your Items ("+offer.getSender().getItems().size()+"): "+ String.format(java.util.Locale.US,"%.2f", getItemsPrice(offer.getSender().getItems()))+ "$",
+                                            "Their Items ("+offer.getRecipient().getItems().size()+"): "+ String.format(java.util.Locale.US,"%.2f", getItemsPrice(offer.getRecipient().getItems()))+ "$",
+                                            offer.getRecipient().getAvatar(),
+                                            offer.getState_name()
+                                    )
+                            );
+                        }
+
+                        adapter.notifyDataSetChanged();
+                        swipeRefreshLayout.setRefreshing(false);
+                        text.setText("");
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        if (!error.isEmpty()) {
+                            Log.e("DrawerSent", error);
+                        }
+                        adapter.notifyDataSetChanged();
+                        swipeRefreshLayout.setRefreshing(false);
+                        text.setText(R.string.info_no_offer);
+                    }
         }).execute();
     }
 
-    public interface OnEventListener {
-        void onSuccess();
-        void onFailure();
-    }
+    public static double getItemsPrice(ArrayList<StandardItem> items) {
+        double price = 0.00;
 
-    private static class LongOperation extends AsyncTask<String, Void, JSONArray> {
-
-        private WeakReference<DrawerSent> activityWeakReference;
-        private TradeInterface tradeInterface;
-        private OnEventListener mCallBack;
-
-        LongOperation(DrawerSent activity, OnEventListener callback) {
-            activityWeakReference = new WeakReference<>(activity);
-            tradeInterface = new TradeImplementation(activity.getContext());
-            mCallBack = callback;
+        for (int i = 0; i < items.size(); i++) {
+            StandardItem item = items.get(i);
+            price += ((double) item.getSuggested_price() / 100);
         }
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected JSONArray doInBackground(String... params) {
-            JSONArray temp = null;
-
-            try {
-                JSONObject offers = tradeInterface.getOffers("sent", "2", "created");
-                if (offers != null && !offers.getString("total").equals("0"))
-                    temp = (JSONArray) offers.get("offers");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return temp;
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray offers) {
-            DrawerSent activity = activityWeakReference.get();
-            activity.offerList.clear();
-
-            if (offers != null) {
-                for (int i = 0; i < offers.length(); i++) {
-                    try {
-                        JSONObject jsonObject = offers.getJSONObject(i);
-                        JSONObject recipient = (JSONObject) jsonObject.get("recipient");
-                        JSONArray recipient_items = (JSONArray) recipient.get("items");
-                        JSONObject sender = (JSONObject) jsonObject.get("sender");
-                        JSONArray sender_items = (JSONArray) sender.get("items");
-
-                        // Total Items in each offer
-                        final int sender_items_length = sender_items.length();
-                        final int recipient_items_length = recipient_items.length();
-
-                        double sender_items_price = 0.00;
-                        double recipient_items_price = 0.00;
-
-                        for (int j = 0; j < sender_items.length(); j++) {
-                            JSONObject sender_item = sender_items.getJSONObject(j);
-                            sender_items_price += ((double) sender_item.getInt("suggested_price") / 100);
-                        }
-
-                        for (int j = 0; j < recipient_items.length(); j++) {
-                            JSONObject recipient_item = recipient_items.getJSONObject(j);
-                            recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
-                        }
-
-                        activity.offerList.add(new Offer(jsonObject.getInt("id"), recipient.getString("display_name"),"Your Items ("+sender_items_length+"): "+ String.format(java.util.Locale.US,"%.2f", sender_items_price)+ "$", "Their Items ("+recipient_items_length+"): "+ String.format(java.util.Locale.US,"%.2f", recipient_items_price)+ "$", recipient.getString("avatar"), jsonObject.getString("state_name")));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-                mCallBack.onSuccess();
-            } else
-                mCallBack.onFailure();
-        }
-
+        return price;
     }
 
 }

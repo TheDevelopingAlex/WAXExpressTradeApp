@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp.Adapters;
+package developingalex.com.waxtradeapp.adapters;
 
 import android.app.Activity;
 import android.content.Context;
@@ -14,7 +14,7 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
-import developingalex.com.waxtradeapp.AppsData;
+import developingalex.com.waxtradeapp.objects.AppsData;
 import developingalex.com.waxtradeapp.R;
 
 public class SpinnerAdapter extends ArrayAdapter<AppsData> {
@@ -36,14 +36,14 @@ public class SpinnerAdapter extends ArrayAdapter<AppsData> {
         final View itemView = convertView == null ? inflater.inflate(groupID, parent,false): convertView;
         final ImageView imageView = itemView.findViewById(R.id.appsImage);
 
-        if (list.get(position).getImage() == null) {
-            imageView.setImageResource(R.drawable.opskins_logo_avatar);
-        } else {
+        if (list.get(position).getImage() != null) {
             Picasso.get()
                     .load(list.get(position).getImage())
                     .error(R.drawable.opskins_logo_avatar)
                     .into(imageView);
-        }
+        } else
+            imageView.setImageResource(R.drawable.opskins_logo_avatar);
+
 
         final TextView textView = itemView.findViewById(R.id.appsText);
         textView.setText(list.get(position).getText());
@@ -54,5 +54,4 @@ public class SpinnerAdapter extends ArrayAdapter<AppsData> {
     public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
         return getView(position, convertView, parent);
     }
-
 }

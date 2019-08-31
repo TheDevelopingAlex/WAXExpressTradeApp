@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp;
+package developingalex.com.waxtradeapp.views;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -20,6 +20,8 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.util.Objects;
+
+import developingalex.com.waxtradeapp.R;
 
 public class CreateOfferCamera extends AppCompatActivity {
 
@@ -53,9 +55,7 @@ public class CreateOfferCamera extends AppCompatActivity {
 
         barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
             @Override
-            public void release() {
-
-            }
+            public void release() { }
 
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
@@ -64,7 +64,7 @@ public class CreateOfferCamera extends AppCompatActivity {
 
                 if (qrCodes.size() != 0) {
 
-                    String regex = "^(http://|https://)?(www.)?([a-zA-Z0-9]+).[a-zA-Z0-9]*.[a-z].?([a-z]+)?.(t).?([0-9])?.([0-9]){6}.([a-zA-Z0-9]){8}$";
+                    final String regex = "^(http://|https://)?(www.)?([a-zA-Z0-9]+).[a-zA-Z0-9]*.[a-z].?([a-z]+)?.(t).?([0-9])?.([0-9]){6}.([a-zA-Z0-9]){8}$";
 
                     if (qrCodes.valueAt(0).displayValue.matches((regex))) {
                         CreateOfferCamera.this.runOnUiThread(new Runnable() {
@@ -106,9 +106,7 @@ public class CreateOfferCamera extends AppCompatActivity {
             }
 
             @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-            }
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
@@ -123,5 +121,4 @@ public class CreateOfferCamera extends AppCompatActivity {
         onBackPressed();
         return true;
     }
-
 }

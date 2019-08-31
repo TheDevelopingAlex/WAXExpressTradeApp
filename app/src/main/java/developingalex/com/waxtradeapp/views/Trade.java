@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp;
+package developingalex.com.waxtradeapp.views;
 
 import android.app.Activity;
 import android.content.Context;
@@ -26,24 +26,25 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import developingalex.com.waxtradeapp.lib.OAuth;
+import developingalex.com.waxtradeapp.R;
+import developingalex.com.waxtradeapp.lib.OAuthImplementation;
 import developingalex.com.waxtradeapp.lib.TradeImplementation;
-import developingalex.com.waxtradeapp.lib.TradeInterface;
+import developingalex.com.waxtradeapp.interfaces.TradeInterface;
 
 public class Trade extends AppCompatActivity {
 
     private final static int ITEMS_TO_SEND = 1;
     private final static int ITEMS_TO_RECEIVE = 2;
 
-    private OAuth oAuth;
+    private OAuthImplementation oAuthImplementation;
     private TradeInterface tradeInterface;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
     private ScrollView content;
     private ProgressBar progressBar;
-    private ImageView userPicReceiver, userPicSender;
-    private TextView usernameReceiver, usernameSender, receiver_info, receiver_info_value, sender_info, sender_info_value;
+    private ImageView userPicReceiver;
+    private TextView usernameReceiver, receiver_info, receiver_info_value, sender_info, sender_info_value;
     private EditText tradeMessage, twoFactorCode;
 
     private String offer_url, user_id, partnerUsername, partnerAvatar;
@@ -56,18 +57,18 @@ public class Trade extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trade);
 
-        Bundle b = getIntent().getExtras();
+        final Bundle b = getIntent().getExtras();
         assert b != null;
         user_id = b.getString("user_id");
         offer_url = b.getString("offer_url");
 
-        oAuth = new OAuth(this);
+        oAuthImplementation = new OAuthImplementation(this);
         tradeInterface = new TradeImplementation(this);
         sharedPreferences = this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
         // Init Toolbar
-        Toolbar toolbar = findViewById(R.id.trade_toolbar);
+        final Toolbar toolbar = findViewById(R.id.trade_toolbar);
         toolbar.setTitle("New Offer");
 
         // Adds Back-Arrow to Toolbar
@@ -80,18 +81,18 @@ public class Trade extends AppCompatActivity {
 
         // Init apps dropdown
         userPicReceiver = findViewById(R.id.trade_userPicReceiver);
-        userPicSender = findViewById(R.id.trade_userPicSender);
+        final ImageView userPicSender = findViewById(R.id.trade_userPicSender);
         // set picture of logged in user
         Picasso.get()
-                .load(oAuth.getUserProfilePicture())
+                .load(oAuthImplementation.getUserProfilePicture())
                 .error(this.getResources().getDrawable(R.drawable.opskins_logo_avatar))
                 .placeholder(this.getResources().getDrawable(R.drawable.opskins_logo_avatar))
                 .into(userPicSender);
 
         usernameReceiver = findViewById(R.id.trade_usernameReceiver);
-        usernameSender = findViewById(R.id.trade_usernameSender);
+        final TextView usernameSender = findViewById(R.id.trade_usernameSender);
         // set text of logged in user
-        usernameSender.setText(oAuth.getUserProfileUsername());
+        usernameSender.setText(oAuthImplementation.getUserProfileUsername());
 
         receiver_info = findViewById(R.id.trade_their);
         receiver_info.setText("Their items (0)");
@@ -109,7 +110,7 @@ public class Trade extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(Trade.this, TradeInventory.class);
                 Bundle b = new Bundle();
-                b.putString("user_id", oAuth.getUserID()); // Parameter for new Activity
+                b.putString("user_id", oAuthImplementation.getUserID()); // Parameter for new Activity
                 b.putStringArrayList("selectedItems", itemsToSend);
                 intent.putExtras(b);
                 startActivityForResult(intent, ITEMS_TO_SEND);
@@ -166,22 +167,19 @@ public class Trade extends AppCompatActivity {
 
                                 if (status.equals("Offer Sent!")) {
 
-                                    JSONObject object = new JSONObject();
+                                    final JSONObject object = new JSONObject();
                                     object.put("username", partnerUsername);
                                     object.put("avatar", partnerAvatar);
                                     object.put("tradeURL", offer_url);
 
-                                    JSONArray array;
-
-                                    if (sharedPreferences.contains("recentTradePartners"))
-                                        array = new JSONArray(sharedPreferences.getString("recentTradePartners", null));
-                                    else
-                                        array = new JSONArray();
+                                    JSONArray array = sharedPreferences.contains("recentTradePartners") ?
+                                            new JSONArray(sharedPreferences.getString("recentTradePartners", null)) :
+                                            new JSONArray();
 
                                     if (sharedPreferences.contains("recentTradePartners")) {
-                                        JSONArray recentTradePartners = new JSONArray(sharedPreferences.getString("recentTradePartners", null));
+                                        final JSONArray recentTradePartners = new JSONArray(sharedPreferences.getString("recentTradePartners", null));
                                         for (int i = 0; i < recentTradePartners.length(); i++) {
-                                            JSONObject partner = recentTradePartners.getJSONObject(i);
+                                            final JSONObject partner = recentTradePartners.getJSONObject(i);
                                             if (!partner.getString("tradeURL").equals(offer_url)) {
                                                 editor.remove("recentTradePartners").apply();   // delete old recentPartners
                                                 array.put(object);
@@ -208,26 +206,31 @@ public class Trade extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        // Check which request we're responding to
-        if (requestCode == ITEMS_TO_SEND && resultCode == RESULT_OK) {
-            itemsToSend = (ArrayList<String>) data.getSerializableExtra("items");
-            sender_info.setText("Your items (" + itemsToSend.size()+")");
-            sender_info_value.setText(data.getStringExtra("totalValue") +"$");
-        }
+        try {
+            // Check which request we're responding to
+            if (requestCode == ITEMS_TO_SEND && resultCode == RESULT_OK) {
+                itemsToSend = (ArrayList<String>) data.getSerializableExtra("items");
+                sender_info.setText("Your items (" + itemsToSend.size()+")");
+                sender_info_value.setText(data.getStringExtra("totalValue") +"$");
+            }
 
-        if (requestCode == ITEMS_TO_RECEIVE && resultCode == RESULT_OK) {
-            itemsToReceive = (ArrayList<String>) data.getSerializableExtra("items");
-            receiver_info.setText("Their items (" + itemsToReceive.size() +")");
-            receiver_info_value.setText(data.getStringExtra("totalValue") +"$");
+            if (requestCode == ITEMS_TO_RECEIVE && resultCode == RESULT_OK) {
+                itemsToReceive = (ArrayList<String>) data.getSerializableExtra("items");
+                receiver_info.setText("Their items (" + itemsToReceive.size() +")");
+                receiver_info_value.setText(data.getStringExtra("totalValue") +"$");
+            }
+        } catch (ClassCastException cce) {
+            cce.printStackTrace();
         }
     }
 
     public void setReceiverInfo(String user_id, final Integer app_id) {
-        LongOperation longOperation = new LongOperation(this, user_id, app_id, new Trade.OnEventListener() {
+        final LongOperation longOperation = new LongOperation(this, user_id, app_id, new EventListener() {
+
             @Override
             public void onSuccess(JSONObject response) {
                 try {
-                    JSONObject userData = response.getJSONObject("user_data");
+                    final JSONObject userData = response.getJSONObject("user_data");
                     // set username
                     usernameReceiver.setText(userData.getString("username"));
 
@@ -246,21 +249,23 @@ public class Trade extends AppCompatActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                     Toast.makeText(Trade.this, "Could not get recipient info", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(Trade.this, CreateOffer.class);
+                    final Intent intent = new Intent(Trade.this, CreateOffer.class);
                     startActivity(intent);
                     finish();
                     overridePendingTransition(R.anim.slide_out_right, R.anim.slide_out_right);
                 }
             }
 
+
             @Override
             public void onFailure(String text) {
                 Toast.makeText(Trade.this, text, Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(Trade.this, CreateOffer.class);
+                final Intent intent = new Intent(Trade.this, CreateOffer.class);
                 startActivity(intent);
                 finish();
                 overridePendingTransition(R.anim.slide_out_right, R.anim.slide_out_right);
             }
+
         });
         longOperation.execute();
     }
@@ -272,22 +277,16 @@ public class Trade extends AppCompatActivity {
         return true;
     }
 
-    public interface OnEventListener {
-        void onSuccess(JSONObject response);
-        void onFailure(String text);
-    }
-
-
     // Long Operation ASYNC Task class
     private static class LongOperation extends AsyncTask<String, Void, JSONObject> {
 
-        private Trade.OnEventListener mCallBack;
+        private EventListener mCallBack;
         private TradeInterface tradeInterface;
 
         private String mUserID;
         private Integer mAppID;
 
-        LongOperation(Activity activity, String user_id, Integer app_id, Trade.OnEventListener callback) {
+        LongOperation(Activity activity, String user_id, Integer app_id, EventListener callback) {
             mCallBack = callback;
             mUserID = user_id;
             mAppID = app_id;
@@ -323,6 +322,11 @@ public class Trade extends AppCompatActivity {
 
         }
 
+    }
+
+    public interface EventListener {
+        void onSuccess(JSONObject response);
+        void onFailure(String error);
     }
 
 }

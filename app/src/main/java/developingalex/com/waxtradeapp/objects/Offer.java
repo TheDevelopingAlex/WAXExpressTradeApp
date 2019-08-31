@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp.Adapters;
+package developingalex.com.waxtradeapp.objects;
 
 public class Offer {
 

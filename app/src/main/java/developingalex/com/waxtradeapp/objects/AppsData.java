@@ -1,8 +1,8 @@
-package developingalex.com.waxtradeapp;
+package developingalex.com.waxtradeapp.objects;
 
 public class AppsData {
 
-    private String app_text, app_image;
+    private final String app_text, app_image;
 
     public AppsData(String app_text, String app_image){
         this.app_text = app_text;

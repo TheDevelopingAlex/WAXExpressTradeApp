@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp;
+package developingalex.com.waxtradeapp.lib;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -22,34 +22,35 @@ import org.json.JSONObject;
 import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
 
-import developingalex.com.waxtradeapp.lib.TradeImplementation;
-import developingalex.com.waxtradeapp.lib.TradeInterface;
+import developingalex.com.waxtradeapp.interfaces.TradeInterface;
+import developingalex.com.waxtradeapp.views.OfferDetail;
+import developingalex.com.waxtradeapp.R;
 
-public class myJobService extends JobService {
+public class MyJobService extends JobService {
 
     private static final String CHANNEL_ID = "WAXTradeNotification";
     private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editor;
 
     @Override
     public boolean onStartJob(final JobParameters params) {
-        sharedPreferences = myJobService.this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
 
-        Log.w("myJobScheduler", "Job started");
+        sharedPreferences = MyJobService.this.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
 
-        new myJobService.LongOperation(myJobService.this, new myJobService.OnEventListener() {
+        Log.i("myJobScheduler", "Job started");
+
+        new MyJobService.LongOperation(MyJobService.this, new MyJobService.OnEventListener() {
             @Override
             public void onSuccess() {
-                editor.remove("lastCalled").apply();
-                editor.putInt("lastCalled", (int) (System.currentTimeMillis() / 1000)).apply();
+                sharedPreferences.edit().remove("lastCalled").apply();
+                sharedPreferences.edit().putInt("lastCalled", (int) (System.currentTimeMillis() / 1000)).apply();
                 jobFinished(params, false);
             }
 
             @Override
             public void onFailure() {
-                editor.remove("lastCalled").apply();
-                editor.putInt("lastCalled", (int) (System.currentTimeMillis() / 1000)).apply();
+                sharedPreferences.edit().remove("lastCalled").apply();
+                Log.i("MyJobScheduler", "JobService was unsuccessful");
+                sharedPreferences.edit().putInt("lastCalled", (int) (System.currentTimeMillis() / 1000)).apply();
                 jobFinished(params, false);
             }
         }).execute();
@@ -60,10 +61,10 @@ public class myJobService extends JobService {
     public void doNotify(int id, String title, String text, int offerId, boolean hideAccept) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name ="Notification for new offers";
-            String description = "You will receive a notification if you have new pending offers";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            final CharSequence name ="Notification for new offers";
+            final String description = "You will receive a notification if you have new pending offers";
+            final int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            final NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this
@@ -71,17 +72,17 @@ public class myJobService extends JobService {
             notificationManager.createNotificationChannel(channel);
         }
 
-        Intent notificationIntent = new Intent(this, OfferDetail.class);
+        final Intent notificationIntent = new Intent(this, OfferDetail.class);
 
-        Bundle b = new Bundle();
+        final Bundle b = new Bundle();
         b.putInt("offerId", offerId); // Parameter for new Activity
         b.putBoolean("hideAccept", hideAccept);
         notificationIntent.putExtras(b);
 
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(this, id, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.wax)
                 .setContentTitle(title)
                 .setContentText(text)
@@ -89,7 +90,7 @@ public class myJobService extends JobService {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        final NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
         // notificationId is a unique int for each notification that you must define
         notificationManager.notify(id, mBuilder.build());
@@ -101,20 +102,18 @@ public class myJobService extends JobService {
         return true;
     }
 
-
     public interface OnEventListener {
         void onSuccess();
         void onFailure();
     }
 
-
     private static class LongOperation extends AsyncTask<String, Void, JSONArray> {
 
-        private WeakReference<myJobService> activityWeakReference;
+        private WeakReference<MyJobService> activityWeakReference;
         private TradeInterface tradeInterface;
-        private myJobService.OnEventListener mCallBack;
+        private MyJobService.OnEventListener mCallBack;
 
-        LongOperation(myJobService activity, myJobService.OnEventListener callback) {
+        LongOperation(MyJobService activity, MyJobService.OnEventListener callback) {
             activityWeakReference = new WeakReference<>(activity);
             tradeInterface = new TradeImplementation(activity);
             mCallBack = callback;
@@ -125,12 +124,11 @@ public class myJobService extends JobService {
             super.onPreExecute();
         }
 
-        private JSONArray concatArray(JSONArray... arrs)
-                throws JSONException {
-            JSONArray result = new JSONArray();
-            for (JSONArray arr : arrs) {
-                for (int i = 0; i < arr.length(); i++) {
-                    result.put(arr.get(i));
+        private JSONArray concatArray(JSONArray... arrays) throws JSONException {
+            final JSONArray result = new JSONArray();
+            for (JSONArray array : arrays) {
+                for (int i = 0; i < array.length(); i++) {
+                    result.put(array.get(i));
                 }
             }
             return result;
@@ -141,8 +139,8 @@ public class myJobService extends JobService {
             JSONArray temp = new JSONArray();
 
             try {
-                JSONObject offers_received = tradeInterface.getOffers("received", "2,6", "modified");
-                JSONObject offer_sent = tradeInterface.getOffers("sent", "3,7", "modified");
+                final JSONObject offers_received = tradeInterface.getOffers("received", "2,6", "modified");
+                final JSONObject offer_sent = tradeInterface.getOffers("sent", "3,7", "modified");
 
                 if (offer_sent != null && offers_received != null)
                     temp = concatArray(offers_received.getJSONArray("offers"), offer_sent.getJSONArray("offers"));
@@ -158,36 +156,36 @@ public class myJobService extends JobService {
 
         @Override
         protected void onPostExecute(JSONArray offers) {
-            myJobService activity = activityWeakReference.get();
-            DecimalFormat price_format = new DecimalFormat("0.00");
+            final MyJobService activity = activityWeakReference.get();
+            final DecimalFormat price_format = new DecimalFormat("0.00");
 
             if (offers != null) {
 
                 for (int index = 0; index < offers.length(); index++) {
 
                     try {
-                        JSONObject jsonObject = offers.getJSONObject(index);
-                        int timeModified = jsonObject.getInt("time_updated");
+                        final JSONObject jsonObject = offers.getJSONObject(index);
+                        final int timeModified = jsonObject.getInt("time_updated");
 
                         if (timeModified >= activity.sharedPreferences.getInt("lastCalled", (int) (System.currentTimeMillis() / 1000))) {
 
                             switch(jsonObject.getInt("state")) {
                                 case 2: {
-                                    JSONObject recipient = (JSONObject) jsonObject.get("recipient");
-                                    JSONArray recipient_items = (JSONArray) recipient.get("items");
-                                    JSONObject sender = (JSONObject) jsonObject.get("sender");
-                                    JSONArray sender_items = (JSONArray) sender.get("items");
+                                    final JSONObject recipient = (JSONObject) jsonObject.get("recipient");
+                                    final JSONArray recipient_items = (JSONArray) recipient.get("items");
+                                    final JSONObject sender = (JSONObject) jsonObject.get("sender");
+                                    final JSONArray sender_items = (JSONArray) sender.get("items");
 
                                     double sender_items_price = 0.00;
                                     double recipient_items_price = 0.00;
 
                                     for (int j = 0; j < sender_items.length(); j++) {
-                                        JSONObject sender_item = sender_items.getJSONObject(j);
+                                        final JSONObject sender_item = sender_items.getJSONObject(j);
                                         sender_items_price += ((double) sender_item.getInt("suggested_price") / 100);
                                     }
 
                                     for (int j = 0; j < recipient_items.length(); j++) {
-                                        JSONObject recipient_item = recipient_items.getJSONObject(j);
+                                        final JSONObject recipient_item = recipient_items.getJSONObject(j);
                                         recipient_items_price += ((double) recipient_item.getInt("suggested_price") / 100);
                                     }
 
@@ -227,6 +225,5 @@ public class myJobService extends JobService {
         }
 
     }
-
 
 }

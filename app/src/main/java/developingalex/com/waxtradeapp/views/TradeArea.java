@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp;
+package developingalex.com.waxtradeapp.views;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -21,15 +21,17 @@ import android.widget.Toast;
 import com.karan.churi.PermissionManager.PermissionManager;
 import com.squareup.picasso.Picasso;
 
-import developingalex.com.waxtradeapp.DrawerViews.DrawerHistory;
-import developingalex.com.waxtradeapp.DrawerViews.DrawerProfile;
-import developingalex.com.waxtradeapp.DrawerViews.DrawerReceived;
-import developingalex.com.waxtradeapp.DrawerViews.DrawerSent;
-import developingalex.com.waxtradeapp.lib.OAuth;
+import developingalex.com.waxtradeapp.MainActivity;
+import developingalex.com.waxtradeapp.R;
+import developingalex.com.waxtradeapp.lib.OAuthImplementation;
+import developingalex.com.waxtradeapp.views.drawerViews.DrawerHistory;
+import developingalex.com.waxtradeapp.views.drawerViews.DrawerProfile;
+import developingalex.com.waxtradeapp.views.drawerViews.DrawerReceived;
+import developingalex.com.waxtradeapp.views.drawerViews.DrawerSent;
 
 public class TradeArea extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    private OAuth oAuth;
+    private OAuthImplementation oAuthImplementation;
     private ProgressDialog progressDialog;
     private PermissionManager permissionManager;
 
@@ -69,20 +71,20 @@ public class TradeArea extends AppCompatActivity implements NavigationView.OnNav
         navigationView.setCheckedItem(R.id.nav_received);
         navigationView.setNavigationItemSelectedListener(this);
 
-        oAuth = new OAuth(this);
+        oAuthImplementation = new OAuthImplementation(this);
         progressDialog = new ProgressDialog(this);
 
         // SET USER PROFILE PICTURE
         final View headView = navigationView.getHeaderView(0);
         final ImageView profilePic = headView.findViewById(R.id.user_profile_picture);
         Picasso.get()
-                .load(oAuth.getUserProfilePicture())
+                .load(oAuthImplementation.getUserProfilePicture())
                 .error(R.drawable.opskins_logo_avatar)
                 .into(profilePic);
 
         // SET USER USERNAME
         final TextView profileUsername = headView.findViewById(R.id.user_profile_username);
-        profileUsername.setText(oAuth.getUserProfileUsername());
+        profileUsername.setText(oAuthImplementation.getUserProfileUsername());
     }
 
     @Override
@@ -149,7 +151,7 @@ public class TradeArea extends AppCompatActivity implements NavigationView.OnNav
                 public void run() {
                     try {
                         // INITIATE LOGOUT
-                        if (oAuth.logout()) {
+                        if (oAuthImplementation.logout()) {
                             Intent intent = new Intent(TradeArea.this, MainActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK); // clears all previous activities task

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/background"
     android:fitsSystemWindows="true"
-    tools:context=".OfferDetail">
+    tools:context=".views.OfferDetail">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"

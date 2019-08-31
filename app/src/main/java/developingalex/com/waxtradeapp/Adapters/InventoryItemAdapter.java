@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp.Adapters;
+package developingalex.com.waxtradeapp.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -13,37 +13,36 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.List;
 
 import developingalex.com.waxtradeapp.R;
+import developingalex.com.waxtradeapp.interfaces.ItemClickListener;
+import developingalex.com.waxtradeapp.objects.StandardItem;
 
 public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdapter.ViewHolder> {
 
-    private Context mContext;
-    private List<OfferItem> offerItems;
+    private Context context;
+    private List<StandardItem> offerItems;
+    private ItemClickListener listener;
 
-    private OnItemClickListener mListener;
-
-    public interface OnItemClickListener {
-        void onItemClick(int position);
-    }
-
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        mListener = listener;
-    }
-
-    public void toggleItemActive(int position) {
-        offerItems.get(position).toggleHighlighted();
-        notifyItemChanged(position);
+    public InventoryItemAdapter(Context context, List<StandardItem> offerItems){
+        this.context = context;
+        this.offerItems = offerItems;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         //each data item is just a string in this case
         final RelativeLayout offer_item_layout;
-        final TextView item_price, item_name, item_wear, item_wear_value;
+        final TextView item_price;
+        final TextView item_name;
+        final TextView item_wear;
+        final TextView item_wear_value;
         final ImageView item_image;
 
-        ViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
+        ViewHolder(@NonNull View itemView, final ItemClickListener listener) {
             super(itemView);
             offer_item_layout = itemView.findViewById(R.id.offer_item_layout);
             item_price = itemView.findViewById(R.id.offer_detail_item_price);
@@ -65,53 +64,60 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
         }
     }
 
-    //Provide a suitable constructor
-    public InventoryItemAdapter(Context ctx, List<OfferItem> offerItems){
-        mContext = ctx;
-        this.offerItems = offerItems;
-    }
-
-
     //Create new views (invoked by the layout manager)
     @NonNull
     @Override
-    public InventoryItemAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
-        //Creating a new view
-        View v = LayoutInflater.from(mContext).inflate(R.layout.inventory_item_card, viewGroup,false);
-        return new ViewHolder(v, mListener);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+        final View v = LayoutInflater.from(context).inflate(R.layout.inventory_item_card, viewGroup,false);
+        return new ViewHolder(v, listener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull InventoryItemAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
-        OfferItem offer = offerItems.get(position);
+        final StandardItem offer = offerItems.get(position);
 
-        if (offer.isHighlighted()) {
-            holder.offer_item_layout.setBackgroundColor(Color.parseColor("#1000ff00")); // green
-        } else {
-            holder.offer_item_layout.setBackgroundColor(Color.parseColor("#80000000")); // default
-        }
-
-        holder.item_price.setText(String.valueOf(offer.getPrice()));
+        holder.offer_item_layout.setBackgroundColor(Color.parseColor(offer.isHighlighted() ? "#1000ff00" : "#80000000")); // green
+        holder.item_price.setText(String.valueOf(offer.getSuggested_price()));
         holder.item_name.setText(offer.getName());
-        holder.item_name.setTextColor(Color.parseColor(offer.getItemColor()));
+        holder.item_name.setTextColor(Color.parseColor(offer.getColor()));
         holder.item_name.setSelected(true);
-        holder.item_wear.setText(offer.getWearName());
-        holder.item_wear.setTextColor(Color.parseColor(offer.getItemColor()));
+        holder.item_wear.setText(String.valueOf(offer.getWear()));
+        holder.item_wear.setTextColor(Color.parseColor(offer.getColor()));
         holder.item_wear_value.setText(String.valueOf(offer.getWear()));
 
-        if (offer.getImage() == null) {
-            holder.item_image.setImageDrawable(mContext.getResources().getDrawable(R.drawable.opskins_logo_avatar));
-        } else {
+        if (offer.getImage() != null) {
             Picasso.get()
-                    .load(offer.getImage())
-                    .error(mContext.getResources().getDrawable(R.drawable.opskins_logo_avatar))
+                    .load(getValidImageURL((JSONObject) offer.getImage()))
+                    .error(context.getResources().getDrawable(R.drawable.opskins_logo_avatar))
                     .into(holder.item_image);
-        }
+        } else
+            holder.item_image.setImageDrawable(context.getResources().getDrawable(R.drawable.opskins_logo_avatar));
     }
 
     @Override
     public int getItemCount() {
         return offerItems.size();
+    }
+
+    public void setOnItemClickListener(ItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    public void toggleItemActive(int position) {
+        offerItems.get(position).toggleHighlighted();
+        notifyItemChanged(position);
+    }
+
+    private String getValidImageURL(JSONObject imageObject) {
+        String imageURL = "";
+        try {
+            if (imageObject.has("300px")) {
+                imageURL = imageObject.getString("300px");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return imageURL;
     }
 }

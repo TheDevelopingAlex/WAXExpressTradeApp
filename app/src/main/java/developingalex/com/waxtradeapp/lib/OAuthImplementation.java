@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 import android.util.Base64;
 import android.util.Log;
 
@@ -18,34 +19,31 @@ import java.util.concurrent.CountDownLatch;
 
 import developingalex.com.waxtradeapp.BuildConfig;
 import developingalex.com.waxtradeapp.MainActivity;
+import developingalex.com.waxtradeapp.interfaces.OAuthInterface;
 import okhttp3.*;
 
 import static android.content.Context.JOB_SCHEDULER_SERVICE;
 
 
-public class OAuth {
+public class OAuthImplementation implements OAuthInterface {
+
+    private final static String REDIRECT_URI = "waxtradeapp://auth";
+    private final static String URL_ACCESS_TOKEN = "https://oauth.opskins.com/v1/access_token";
+    private final static String URL_GET_TRADE_URL = "https://api-trade.opskins.com/ITrade/GetTradeURL/v1/";
+    private final static String URL_TEST_AUTH = "https://api.opskins.com/ITest/TestAuthed/v1/";
+    private final static String URL_GET_PROFILE = "https://api.opskins.com/IUser/GetProfile/v1/";
+    private final static String URL_REVOKE_TOKEN = "https://oauth.opskins.com/v1/revoke_token";
 
     private final OkHttpClient client = new OkHttpClient();
-    private final static String redirectUri = "waxtradeapp://auth";
-
     private final SharedPreferences sharedPreferences;
-    private final Context mContext;
+    private final Context context;
 
-    public OAuth(Context context) {
+    public OAuthImplementation(Context context) {
+        this.context = context;
         sharedPreferences = context.getSharedPreferences("sharedPrefs", Context.MODE_PRIVATE);
-        mContext = context;
-    }
-
-    public String getURL() {
-        return "https://oauth.opskins.com/v1/authorize?client_id="+ BuildConfig.oauth_clientId + "&state="+ getRandomNumber() +"&scope=identity+trades+items&response_type=code&duration=permanent";
-    }
-
-    public boolean checkAuthStatus() {
-        return sharedPreferences.getString("access_token", null) != null;
     }
 
     public boolean accountSetup(String code) throws Exception {
-        final String url = "https://oauth.opskins.com/v1/access_token";
 
         final RequestBody formBody = new FormBody.Builder()
                 .add("grant_type", "authorization_code")
@@ -54,106 +52,139 @@ public class OAuth {
 
         final Request request  = new Request.Builder()
                 .header("Authorization", getAuthorization())
-                .url(url)
+                .url(URL_ACCESS_TOKEN)
                 .post(formBody)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("[OAuth::AccountSetup] Unexpected code" + response);
+            if (!response.isSuccessful())
+                throw new IOException("[OAuthImplementation::AccountSetup] Unexpected code" + response);
 
             assert response.body() != null;
 
             try {
-                JSONObject jsonResponse = new JSONObject(response.body().string());
+                final JSONObject jsonResponse = new JSONObject(response.body().string());
 
-                if (jsonResponse.getString("token_type").equals("bearer") && jsonResponse.has("access_token"))
+                if (jsonResponse.has("access_token") && jsonResponse.getString("token_type").equals("bearer"))
                     sharedPreferences.edit().putString("access_token", jsonResponse.getString("access_token")).apply();
                 else
-                    throw new IOException("[OAuth::AccountSetup] Token Error!");
+                    throw new IOException("[OAuthImplementation::AccountSetup] Token Error!");
 
                 if (jsonResponse.has("refresh_token"))
                     sharedPreferences.edit().putString("refresh_token", jsonResponse.getString("refresh_token")).apply();
 
-                return getUserProfile();
-            } catch (JSONException ex) {
-                throw new IOException("[OAuth::AccountSetup]" + ex);
-            }
-        }
-    }
-
-    private boolean getUserProfile() throws Exception {
-        final String url = "https://api.opskins.com/IUser/GetProfile/v1/";
-
-        final Request request  = new Request.Builder()
-                .header("Authorization", getBearerToken())
-                .url(url)
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("[OAuth::GetUserProfile] Unexpected code" + response);
-
-            assert response.body() != null;
-
-            try {
-                JSONObject jsonResponse = new JSONObject(response.body().string());
-                JSONObject profile_response = (JSONObject) jsonResponse.get("response");
-
-                sharedPreferences.edit().putInt("profile:user_id", profile_response.getInt("id")).apply();
-                sharedPreferences.edit().putString("profile:username", profile_response.getString("username")).apply();
-                sharedPreferences.edit().putString("profile:avatar", profile_response.getString("avatar")).apply();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            setUserProfile();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }).start();
 
                 return true;
             } catch (JSONException ex) {
-                throw new IOException("[OAuth::GetUserProfile] JSON Error");
+                throw new IOException("[OAuthImplementation::AccountSetup]" + ex);
             }
         }
-
     }
 
+    public boolean logout() {
 
-    public String getUserProfilePicture() {
-        return sharedPreferences.getString("profile:avatar", null);
+        if (sharedPreferences.getString("refresh_token", "") != null) {
+
+            final String refreshToken = sharedPreferences.getString("refresh_token", "");
+            assert refreshToken != null;
+
+            final RequestBody formBody = new FormBody.Builder()
+                    .add("token_type", "refresh")
+                    .add("token", refreshToken)
+                    .build();
+
+            final Request request = new Request.Builder()
+                    .header("Authorization", getAuthorization())
+                    .url(URL_REVOKE_TOKEN)
+                    .post(formBody)
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful())
+                    throw new IOException("[OAuthImplementation::Logout] Unexpected code" + response);
+
+                sharedPreferences.edit().remove("refresh_token").apply();
+                sharedPreferences.edit().remove("access_token").apply();
+                sharedPreferences.edit().remove("recentTradePartners").apply();
+
+                final JobScheduler scheduler = (JobScheduler) context.getSystemService(JOB_SCHEDULER_SERVICE);
+                scheduler.cancelAll();
+
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        } else
+            return true;
     }
 
-    public String getUserProfileUsername() {
-        return sharedPreferences.getString("profile:username", null);
+    public boolean checkAuthStatus() {
+        return sharedPreferences.getString("access_token", null) != null;
+    }
+
+    public String getAuthURL() {
+        return "https://oauth.opskins.com/v1/authorize?client_id="+ BuildConfig.oauth_clientId + "&state="+ getRandomNumber() +"&scope=identity+trades+items&response_type=code&duration=permanent";
+    }
+
+    public String getRedirectUri() {
+        return REDIRECT_URI;
     }
 
     public String getUserID() {
         return String.valueOf(sharedPreferences.getInt("profile:user_id",0));
     }
 
+    public String getUserProfileUsername() {
+        return sharedPreferences.getString("profile:username", null);
+    }
+
+    public String getUserProfilePicture() {
+        return sharedPreferences.getString("profile:avatar", null);
+    }
+
+
     public String getUserTradeURL() throws Exception {
-        final String url = "https://api-trade.opskins.com/ITrade/GetTradeURL/v1/";
 
         final Request request  = new Request.Builder()
                 .header("Authorization", getBearerToken())
-                .url(url)
+                .url(URL_GET_TRADE_URL)
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("[OAuth::GetUserTradeURL] Unexpected code" + response);
+            if (!response.isSuccessful())
+                throw new IOException("[OAuthImplementation::GetUserTradeURL] Unexpected code" + response);
 
             assert response.body() != null;
             final String myResponse = response.body().string();
 
             try {
-                JSONObject jsonResponse = new JSONObject(myResponse);
-                JSONObject urlResponse = (JSONObject) jsonResponse.get("response");
+                final JSONObject jsonResponse = new JSONObject(myResponse);
+                final JSONObject urlResponse = (JSONObject) jsonResponse.get("response");
                 return urlResponse.getString("short_url");
 
             } catch (JSONException ex) {
-                throw new IOException("[OAuth::GetUserTradeURL] JSON Error");
+                throw new IOException("[OAuthImplementation::GetUserTradeURL] JSON Error");
             }
         }
-
     }
 
+
     String getBearerToken() throws Exception {
-        final String url = "https://api.opskins.com/ITest/TestAuthed/v1/";
+
         final Request request  = new Request.Builder()
                 .header("Authorization", "Bearer " + sharedPreferences.getString("access_token", null))
-                .url(url)
+                .url(URL_TEST_AUTH)
                 .build();
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -169,23 +200,27 @@ public class OAuth {
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try {
                     assert response.body() != null;
-                    String myResponse = response.body().string();
+                    final String myResponse = response.body().string();
 
                     if (response.code() == 401) {
-                        JSONObject jsonResponse = new JSONObject(myResponse);
+                        final JSONObject jsonResponse = new JSONObject(myResponse);
 
                         if (jsonResponse.has("error")) {
+
                             switch (jsonResponse.getString("error")) {
                                 case "invalid_token": {
                                     sharedPreferences.edit().remove("access_token").apply();
+
                                     new Thread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            String url = "https://oauth.opskins.com/v1/access_token";
 
-                                            RequestBody formBody = new FormBody.Builder()
+                                            final String refreshToken = sharedPreferences.getString("refresh_token", "");
+                                            assert refreshToken != null;
+
+                                            final RequestBody formBody = new FormBody.Builder()
                                                     .add("grant_type", "refresh_token")
-                                                    .add("refresh_token", sharedPreferences.getString("refresh_token", ""))
+                                                    .add("refresh_token", refreshToken)
                                                     .build();
 
                                             String authorization = "";
@@ -196,9 +231,9 @@ public class OAuth {
                                                 e.printStackTrace();
                                             }
 
-                                            Request request  = new Request.Builder()
+                                            final Request request  = new Request.Builder()
                                                     .header("Authorization", authorization)
-                                                    .url(url)
+                                                    .url(URL_ACCESS_TOKEN)
                                                     .post(formBody)
                                                     .build();
 
@@ -214,11 +249,11 @@ public class OAuth {
                                                 @Override
                                                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                                                     assert response.body() != null;
-                                                    String myResponse = response.body().string();
+                                                    final String myResponse = response.body().string();
 
                                                     if (response.isSuccessful()) {
                                                         try {
-                                                            JSONObject jsonResponse = new JSONObject(myResponse);
+                                                            final JSONObject jsonResponse = new JSONObject(myResponse);
                                                             if (jsonResponse.getString("token_type").equals("bearer") && jsonResponse.has("access_token"))
                                                                 sharedPreferences.edit().putString("access_token", jsonResponse.getString("access_token")).apply();
                                                             else
@@ -234,12 +269,12 @@ public class OAuth {
                                                         sharedPreferences.edit().remove("access_token").apply();
                                                         sharedPreferences.edit().remove("recentTradePartners").apply();
 
-                                                        JobScheduler scheduler = (JobScheduler) mContext.getSystemService(JOB_SCHEDULER_SERVICE);
+                                                        final JobScheduler scheduler = (JobScheduler) context.getSystemService(JOB_SCHEDULER_SERVICE);
                                                         scheduler.cancelAll();
 
-                                                        Intent intent = new Intent(mContext, MainActivity.class);
+                                                        final Intent intent = new Intent(context, MainActivity.class);
                                                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                                        mContext.startActivity(intent);
+                                                        context.startActivity(intent);
                                                     }
                                                 }
                                             });
@@ -250,10 +285,10 @@ public class OAuth {
                                     break;
                                 }
                                 case "invalid_grant": {
-                                    Log.w("OAuth", jsonResponse.getString("error_description"));
+                                    Log.w("OAuthImplementation", jsonResponse.getString("error_description"));
                                     break;
                                 }
-                                default: { throw new IOException("[OAuth::GetUserTradeURL] Unknown OAuth Error"); }
+                                default: { throw new IOException("[OAuthImplementation::GetUserTradeURL] Unknown OAuthImplementation Error"); }
                             }
                         }
                     } else countDownLatch.countDown();
@@ -267,45 +302,31 @@ public class OAuth {
         return ("Bearer " + sharedPreferences.getString("access_token", null));
     }
 
-    public String getRedirectUri() {
-        return redirectUri;
-    }
+    @WorkerThread
+    private void setUserProfile() throws Exception {
 
-    public boolean logout() {
+        final Request request  = new Request.Builder()
+                .header("Authorization", getBearerToken())
+                .url(URL_GET_PROFILE)
+                .build();
 
-        if (sharedPreferences.getString("refresh_token", "") != null) {
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                throw new Exception("[OAuthImplementation::GetUserProfile] Unexpected code" + response);
 
-            final String url = "https://oauth.opskins.com/v1/revoke_token";
+            assert response.body() != null;
 
-            final RequestBody formBody = new FormBody.Builder()
-                    .add("token_type", "refresh")
-                    .add("token", sharedPreferences.getString("refresh_token", ""))
-                    .build();
+            try {
+                final JSONObject jsonResponse = new JSONObject(response.body().string());
+                final JSONObject profile_response = (JSONObject) jsonResponse.get("response");
 
-            final Request request = new Request.Builder()
-                    .header("Authorization", getAuthorization())
-                    .url(url)
-                    .post(formBody)
-                    .build();
-
-
-            try (Response response = client.newCall(request).execute()) {
-                if (!response.isSuccessful()) throw new IOException("[OAuth::Logout] Unexpected code" + response);
-
-                sharedPreferences.edit().remove("refresh_token").apply();
-                sharedPreferences.edit().remove("access_token").apply();
-                sharedPreferences.edit().remove("recentTradePartners").apply();
-
-                JobScheduler scheduler = (JobScheduler) mContext.getSystemService(JOB_SCHEDULER_SERVICE);
-                scheduler.cancelAll();
-
-                return true;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
+                sharedPreferences.edit().putInt("profile:user_id", profile_response.getInt("id")).apply();
+                sharedPreferences.edit().putString("profile:username", profile_response.getString("username")).apply();
+                sharedPreferences.edit().putString("profile:avatar", profile_response.getString("avatar")).apply();
+            } catch (JSONException ex) {
+                throw new Exception("[OAuthImplementation::GetUserProfile] JSON Error");
             }
-        } else
-            return true;
+        }
     }
 
     private String getAuthorization() {
