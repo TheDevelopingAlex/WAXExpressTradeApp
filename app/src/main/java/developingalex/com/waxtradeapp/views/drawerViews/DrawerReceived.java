@@ -42,7 +42,13 @@ public class DrawerReceived extends Fragment {
     private TradeInterface tradeInterface;
 
     private ArrayList<Offer> offerList = new ArrayList<>();
+
+    private RecyclerView recyclerView;
     private OfferAdapter adapter;
+
+    private boolean isLoading = false;
+    private static final int PER_PAGE = 50;
+    private int page = 0;
 
     @Nullable
     @Override
@@ -53,37 +59,65 @@ public class DrawerReceived extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
-        // find and initialize components
         tradeInterface = new TradeImplementation(view.getContext());
+
         text = view.findViewById(R.id.drawer_receiver_text);
 
         swipeRefreshLayout = view.findViewById(R.id.drawer_received_swipe);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                loadOffers();
+                loadOffers(false);
             }
         });
-        // Configure the refreshing colors
         swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark);
 
-        loadOffers();
+        initRecyclerView(view);
+    }
 
-        // init recyclerView
-        final RecyclerView recyclerView = view.findViewById(R.id.drawer_receiver_recyclerView);
+    private void initRecyclerView(@NonNull View view) {
+
+        recyclerView = view.findViewById(R.id.drawer_receiver_recyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        // setting adapter
+        initAdapter();
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+
+                if (!isLoading) {
+                    if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == offerList.size() - 1) {
+                        loadOffers(true);
+                    }
+                }
+            }
+        });
+    }
+
+
+    private void initAdapter() {
+
         adapter = new OfferAdapter(getActivity(), offerList);
         recyclerView.setAdapter(adapter);
+
+        loadOffers(false);
 
         adapter.setOnItemClickListener(new ItemClickListener() {
             @Override
             public void onItemClick(int position) {
                 Intent intent = new Intent(getActivity(), OfferDetail.class);
                 Bundle b = new Bundle();
-                b.putInt("offerId", offerList.get(position).getId()); // Parameter for new Activity
+                b.putInt("offerId", offerList.get(position).getId());
                 b.putBoolean("hideAccept", false);
                 intent.putExtras(b);
                 startActivity(intent);
@@ -131,7 +165,7 @@ public class DrawerReceived extends Fragment {
                                                     public void run() {
                                                         temp_dialog.dismiss();
                                                         Toast.makeText(getContext(), "Offer Accepted", Toast.LENGTH_SHORT).show();
-                                                        loadOffers();
+                                                        loadOffers(false);
                                                     }
                                                 });
                                             } else {
@@ -164,7 +198,6 @@ public class DrawerReceived extends Fragment {
 
                 AlertDialog alert = builder.create();
                 alert.show();
-
             }
 
             @Override
@@ -189,7 +222,7 @@ public class DrawerReceived extends Fragment {
                                             @Override
                                             public void run() {
                                                 Toast.makeText(getContext(), "Offer Declined", Toast.LENGTH_SHORT).show();
-                                                loadOffers();
+                                                loadOffers(false);
                                             }
                                         });
                                     } else {
@@ -222,14 +255,25 @@ public class DrawerReceived extends Fragment {
     }
 
 
-    private void loadOffers() {
+    private void loadOffers(final boolean loadMore) {
 
+        isLoading = true;
         swipeRefreshLayout.setRefreshing(true);
 
-        new AsyncOfferLoader(getContext(), "received", "2", "created",
+        if (loadMore) {
+            this.page +=1;
+        } else {
+            this.page = 1;
+        }
+
+        new AsyncOfferLoader(getContext(), "received", "2", "created", page, PER_PAGE,
                 new OfferListener() {
                     @Override
                     public void onSuccess(ArrayList<StandardTradeOffer> offers) {
+
+                        if (!loadMore) {
+                            offerList.clear();
+                        }
 
                         for (int i = 0; i <offers.size(); i++) {
                             StandardTradeOffer offer = offers.get(i);
@@ -248,17 +292,21 @@ public class DrawerReceived extends Fragment {
 
                         adapter.notifyDataSetChanged();
                         swipeRefreshLayout.setRefreshing(false);
+                        isLoading = false;
                         text.setText("");
                     }
 
                     @Override
-                    public void onFailure(String error) {
-                        if (!error.isEmpty()) {
-                            Log.e("DrawerReceived", error);
+                    public void onFailure(String info) {
+                        if (!info.isEmpty()) {
+                            Log.i("DrawerReceived", info);
                         }
                         adapter.notifyDataSetChanged();
                         swipeRefreshLayout.setRefreshing(false);
-                        text.setText(R.string.info_no_offer);
+                        isLoading = false;
+                        if (offerList.size() == 0) {
+                            text.setText(R.string.info_no_offer);
+                        }
                     }
         }).execute();
     }

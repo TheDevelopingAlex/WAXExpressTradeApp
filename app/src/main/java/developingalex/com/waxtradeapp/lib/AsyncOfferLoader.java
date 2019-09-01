@@ -19,15 +19,17 @@ public class AsyncOfferLoader extends AsyncTask<String, Void, JSONArray> {
     private String requestType;
     private TradeInterface tradeInterface;
     private String type, states, sort;
-    private int offer_id;
+    private int page, per_page, offer_id;
     private OfferListener callback;
 
-    public AsyncOfferLoader(Context context, String type, String states, String sort, OfferListener callback) {
+    public AsyncOfferLoader(Context context, String type, String states, String sort, int page, int per_page, OfferListener callback) {
         this.requestType = "OFFERS";
         tradeInterface = new TradeImplementation(context);
         this.type = type;
         this.states =  states;
         this.sort = sort;
+        this.page = page;
+        this.per_page = per_page;
         this.callback = callback;
     }
 
@@ -52,7 +54,7 @@ public class AsyncOfferLoader extends AsyncTask<String, Void, JSONArray> {
         try {
 
             if (this.requestType.equals("OFFERS")) {
-                output = tradeInterface.getOffers(this.type, this.states, this.sort);
+                output = tradeInterface.getOffers(this.type, this.states, this.sort, this.page, this.per_page);
 
                 if (output != null && Integer.parseInt(output.getString("total")) != 0) {
                     offers = output.getJSONArray("offers");

@@ -34,11 +34,12 @@ import developingalex.com.waxtradeapp.R;
 
 public class DrawerHistory extends Fragment {
 
-    // WeakReference for static class -> Activity
-    private static WeakReference<DrawerHistory> mActivityRef;
+    private static WeakReference<DrawerHistory> activityRef;
+
+    private static final int PER_PAGE = 50;
 
     public static void updateActivity(DrawerHistory activity) {
-        mActivityRef = new WeakReference<>(activity);
+        activityRef = new WeakReference<>(activity);
     }
 
     @Override
@@ -52,10 +53,10 @@ public class DrawerHistory extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.drawer_history, container, false);
-        // Setting ViewPager for each Tabs
+
         final ViewPager viewPager = view.findViewById(R.id.viewpager);
         setupViewPager(viewPager);
-        // Set Tabs inside Toolbar
+
         final TabLayout tabs = view.findViewById(R.id.tabs);
         tabs.setupWithViewPager(viewPager);
 
@@ -63,14 +64,15 @@ public class DrawerHistory extends Fragment {
     }
 
     private void setupViewPager(ViewPager viewPager) {
-        final Adapter adapter = new Adapter(getChildFragmentManager());
 
+        final Adapter adapter = new Adapter(getChildFragmentManager());
         adapter.addFragment(new ReceivedFragment(), "Received");
         adapter.addFragment(new SentFragment(), "Sent");
         viewPager.setAdapter(adapter);
     }
 
     static class Adapter extends FragmentPagerAdapter {
+
         private final List<Fragment> fragmentList = new ArrayList<>();
         private final List<String> fragmentTitleList = new ArrayList<>();
 
@@ -104,11 +106,15 @@ public class DrawerHistory extends Fragment {
     public static class SentFragment extends Fragment {
 
         private OfferAdapter adapter;
+        private RecyclerView recyclerView;
 
         private SwipeRefreshLayout swipeRefreshLayout;
-        private TextView mText;
+        private TextView text;
 
-        private final ArrayList<Offer> offerList = new ArrayList<>();
+        private ArrayList<Offer> offerList = new ArrayList<>();
+
+        private boolean isLoading;
+        private int page = 0;
 
         public SentFragment() { }
 
@@ -125,25 +131,51 @@ public class DrawerHistory extends Fragment {
         @Override
         public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
-            mText = view.findViewById(R.id.drawer_history_text);
+            text = view.findViewById(R.id.drawer_history_text);
 
             swipeRefreshLayout = view.findViewById(R.id.drawer_history_swipe);
             swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
                 public void onRefresh() {
-                    loadOffers();
+                    loadOffers(false);
                 }
             });
-            // Configure the refreshing colors
             swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark);
 
-            swipeRefreshLayout.setRefreshing(true);
+            initRecyclerView(view);
+        }
 
-            RecyclerView recyclerView = view.findViewById(R.id.drawer_history_recyclerView);
+        private void initRecyclerView(View view) {
+
+            recyclerView = view.findViewById(R.id.drawer_history_recyclerView);
             recyclerView.setHasFixedSize(true);
             recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-            // settings adapter
+            initAdapter();
+
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                }
+
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+
+                    LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+
+                    if (!isLoading) {
+                        if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == offerList.size() - 1) {
+                            loadOffers(true);
+                        }
+                    }
+                }
+            });
+        }
+
+        private void initAdapter() {
+
             adapter = new OfferAdapter(getActivity(), offerList);
             recyclerView.setAdapter(adapter);
 
@@ -151,7 +183,7 @@ public class DrawerHistory extends Fragment {
             adapter.declineButtonVisibility(false);
             adapter.statusTextVisibility(true);
 
-            loadOffers();
+            loadOffers(false);
 
             adapter.setOnItemClickListener(new ItemClickListener() {
                 @Override
@@ -175,15 +207,26 @@ public class DrawerHistory extends Fragment {
             });
         }
 
-        private void loadOffers() {
+        private void loadOffers(final boolean loadMore) {
 
-            offerList.clear();
+            isLoading = true;
+            swipeRefreshLayout.setRefreshing(true);
 
-            new AsyncOfferLoader(mActivityRef.get().getActivity(),"sent", "3,5,6,7,8", "created",
+            if (loadMore) {
+                this.page +=1;
+            } else {
+                this.page = 1;
+            }
+
+            new AsyncOfferLoader(activityRef.get().getActivity(),"sent", "3,5,6,7,8", "created", page, PER_PAGE,
                     new OfferListener() {
                         @Override
                         public void onSuccess(ArrayList<StandardTradeOffer> offers) {
-                            // Add offers to list and notify adapter to refresh it
+
+                            if (!loadMore) {
+                                offerList.clear();
+                            }
+
                             for (int i = 0; i < offers.size(); i++) {
                                 StandardTradeOffer offer = offers.get(i);
 
@@ -201,17 +244,21 @@ public class DrawerHistory extends Fragment {
 
                             adapter.notifyDataSetChanged();
                             swipeRefreshLayout.setRefreshing(false);
-                            mText.setText("");
+                            isLoading = false;
+                            text.setText("");
                         }
 
                         @Override
-                        public void onFailure(String error) {
-                            if (!error.isEmpty()) {
-                                Log.e("DrawerReceived", error);
+                        public void onFailure(String info) {
+                            if (!info.isEmpty()) {
+                                Log.i("DrawerReceived", info);
                             }
                             adapter.notifyDataSetChanged();
                             swipeRefreshLayout.setRefreshing(false);
-                            mText.setText(R.string.info_no_offer);
+                            isLoading = false;
+                            if (offerList.size() == 0) {
+                                text.setText(R.string.info_no_offer);
+                            }
                         }
                     }).execute();
         }
@@ -224,9 +271,12 @@ public class DrawerHistory extends Fragment {
 
         private SwipeRefreshLayout swipeRefreshLayout;
         public RecyclerView recyclerView;
-        private TextView mText;
+        private TextView text;
 
         public ArrayList<Offer> offerList = new ArrayList<>();
+
+        private boolean isLoading = false;
+        private int page = 0;
 
         public ReceivedFragment() { }
 
@@ -237,32 +287,57 @@ public class DrawerHistory extends Fragment {
 
         @Override
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            // Inflate the layout for this fragment
             return inflater.inflate(R.layout.drawer_history_content, container, false);
         }
 
         @Override
         public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
-            mText = view.findViewById(R.id.drawer_history_text);
+            text = view.findViewById(R.id.drawer_history_text);
 
             swipeRefreshLayout = view.findViewById(R.id.drawer_history_swipe);
             swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
                 public void onRefresh() {
-                    loadOffers();
+                    loadOffers(false);
                 }
             });
-            // Configure the refreshing colors
             swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_dark);
 
-            swipeRefreshLayout.setRefreshing(true);
+            initRecyclerView(view);
+        }
+
+        private void initRecyclerView(View view) {
 
             recyclerView = view.findViewById(R.id.drawer_history_recyclerView);
             recyclerView.setHasFixedSize(true);
             recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-            // settings adapter
+            initAdapter();
+
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                    super.onScrollStateChanged(recyclerView, newState);
+                }
+
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+
+                    LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+
+                    if (!isLoading) {
+                        if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == offerList.size() - 1) {
+                            loadOffers(true);
+                        }
+                    }
+                }
+            });
+        }
+
+        private void initAdapter() {
+
             adapter = new OfferAdapter(getActivity(), offerList);
             recyclerView.setAdapter(adapter);
 
@@ -270,7 +345,7 @@ public class DrawerHistory extends Fragment {
             adapter.declineButtonVisibility(false);
             adapter.statusTextVisibility(true);
 
-            loadOffers();
+            loadOffers(false);
 
             adapter.setOnItemClickListener(new ItemClickListener() {
                 @Override
@@ -291,15 +366,26 @@ public class DrawerHistory extends Fragment {
             });
         }
 
-        private void loadOffers() {
+        private void loadOffers(final boolean loadMore) {
 
-            offerList.clear();
+            isLoading = true;
+            swipeRefreshLayout.setRefreshing(true);
 
-            new AsyncOfferLoader(mActivityRef.get().getActivity(),"received", "3,5,6,7,8", "created",
+            if (loadMore) {
+                this.page += 1;
+            } else {
+                this.page = 1;
+            }
+
+            new AsyncOfferLoader(activityRef.get().getActivity(),"received", "3,5,6,7,8", "created", this.page, PER_PAGE,
                     new OfferListener() {
                         @Override
                         public void onSuccess(ArrayList<StandardTradeOffer> offers) {
-                            // Add offers to list and notify adapter to refresh it
+
+                            if (!loadMore) {
+                                offerList.clear();
+                            }
+
                             for (int i = 0; i< offers.size(); i++) {
                                 StandardTradeOffer offer = offers.get(i);
 
@@ -317,17 +403,21 @@ public class DrawerHistory extends Fragment {
 
                             adapter.notifyDataSetChanged();
                             swipeRefreshLayout.setRefreshing(false);
-                            mText.setText("");
+                            isLoading = false;
+                            text.setText("");
                         }
 
                         @Override
-                        public void onFailure(String error) {
-                            if (!error.isEmpty()) {
-                                Log.e("DrawerHistory", error);
+                        public void onFailure(String info) {
+                            if (!info.isEmpty()) {
+                                Log.i("DrawerHistory", info);
                             }
                             adapter.notifyDataSetChanged();
                             swipeRefreshLayout.setRefreshing(false);
-                            mText.setText(R.string.info_no_offer);
+                            isLoading = false;
+                            if (offerList.size() == 0) {
+                                text.setText(R.string.info_no_offer);
+                            }
                         }
             }).execute();
         }

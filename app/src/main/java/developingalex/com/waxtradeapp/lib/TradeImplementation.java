@@ -35,9 +35,9 @@ public class TradeImplementation implements TradeInterface {
         oAuthImplementation = new OAuthImplementation(context);
     }
 
-    public JSONObject getOffers(String type, String state, String sort) throws Exception {
+    public JSONObject getOffers(String type, String state, String sort, int page, int per_page) throws Exception {
 
-        final String url = "https://api-trade.opskins.com/ITrade/GetOffers/v1?&state=" + state + "&type=" + type + "&sort=" + sort;
+        final String url = "https://api-trade.opskins.com/ITrade/GetOffers/v1?&state=" + state + "&type=" + type + "&sort=" + sort + "&page=" + page + "&per_page=" + per_page;
         final Request request = new Request.Builder()
                 .header("Authorization", oAuthImplementation.getBearerToken())
                 .url(url)

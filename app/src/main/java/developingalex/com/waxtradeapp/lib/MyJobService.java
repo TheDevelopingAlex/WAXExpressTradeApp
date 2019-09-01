@@ -139,8 +139,8 @@ public class MyJobService extends JobService {
             JSONArray temp = new JSONArray();
 
             try {
-                final JSONObject offers_received = tradeInterface.getOffers("received", "2,6", "modified");
-                final JSONObject offer_sent = tradeInterface.getOffers("sent", "3,7", "modified");
+                final JSONObject offers_received = tradeInterface.getOffers("received", "2,6", "modified", 1, 25);
+                final JSONObject offer_sent = tradeInterface.getOffers("sent", "3,7", "modified", 1, 25);
 
                 if (offer_sent != null && offers_received != null)
                     temp = concatArray(offers_received.getJSONArray("offers"), offer_sent.getJSONArray("offers"));

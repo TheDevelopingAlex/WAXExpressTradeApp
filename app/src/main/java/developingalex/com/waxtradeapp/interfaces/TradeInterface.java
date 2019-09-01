@@ -3,7 +3,7 @@ package developingalex.com.waxtradeapp.interfaces;
 import org.json.JSONObject;
 
 public interface TradeInterface {
-    JSONObject getOffers(String type, String state, String sort) throws Exception;
+    JSONObject getOffers(String type, String state, String sort, int page, int per_page) throws Exception;
     JSONObject getOffer(Integer offer_id) throws Exception;
     boolean acceptOffer(Integer offer_id, String twofactor_code) throws Exception;
     boolean cancelOffer(Integer offer_id) throws Exception;
