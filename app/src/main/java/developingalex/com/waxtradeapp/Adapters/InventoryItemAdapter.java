@@ -17,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.Locale;
 
 import developingalex.com.waxtradeapp.R;
 import developingalex.com.waxtradeapp.interfaces.ItemClickListener;
@@ -38,7 +39,7 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
         final RelativeLayout offer_item_layout;
         final TextView item_price;
         final TextView item_name;
-        final TextView item_wear;
+        final TextView item_category;
         final TextView item_wear_value;
         final ImageView item_image;
 
@@ -47,7 +48,7 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
             offer_item_layout = itemView.findViewById(R.id.offer_item_layout);
             item_price = itemView.findViewById(R.id.offer_detail_item_price);
             item_name = itemView.findViewById(R.id.offer_detail_item_name);
-            item_wear = itemView.findViewById(R.id.offer_detail_item_wear);
+            item_category = itemView.findViewById(R.id.offer_detail_item_wear);
             item_wear_value = itemView.findViewById(R.id.offer_detail_item_wear_value);
             item_image = itemView.findViewById(R.id.offer_detail_item_image);
 
@@ -75,20 +76,55 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
-        final StandardItem offer = offerItems.get(position);
+        final StandardItem item = offerItems.get(position);
 
-        holder.offer_item_layout.setBackgroundColor(Color.parseColor(offer.isHighlighted() ? "#1000ff00" : "#80000000")); // green
-        holder.item_price.setText(String.valueOf(offer.getSuggested_price()));
-        holder.item_name.setText(offer.getName());
-        holder.item_name.setTextColor(Color.parseColor(offer.getColor()));
+        holder.offer_item_layout.setBackgroundColor(Color.parseColor(item.isHighlighted() ? "#1000ff00" : "#80000000")); // green
+        holder.item_price.setText(String.format(Locale.US, "%.2f", item.getSuggested_price()) + "$");
+        holder.item_name.setText(item.getName());
+
+        int color;
+        try {
+            color = Color.parseColor(item.getColor());
+        } catch (Exception e) {
+            color = Color.WHITE;
+        }
+        holder.item_name.setTextColor(color);
+
         holder.item_name.setSelected(true);
-        holder.item_wear.setText(String.valueOf(offer.getWear()));
-        holder.item_wear.setTextColor(Color.parseColor(offer.getColor()));
-        holder.item_wear_value.setText(String.valueOf(offer.getWear()));
+        holder.item_category.setTextColor(color);
 
-        if (offer.getImage() != null) {
+        if (!item.getCategory().isEmpty()) {
+            holder.item_category.setText(item.getCategory());
+        } else if (!item.getType().isEmpty()) {
+            holder.item_category.setText(item.getType());
+        } else if (!item.getRarity().isEmpty()) {
+            holder.item_category.setText(item.getRarity());
+        } else {
+
+            try {
+                JSONObject attributes = (JSONObject) item.getAttributes();
+
+                if (attributes.has("item_type") && !attributes.getString("item_type").isEmpty()) {
+                    holder.item_category.setText(attributes.getString("item_type"));
+                } else if (attributes.has("collection") && !attributes.getString("collection").isEmpty()){
+                    holder.item_category.setText(attributes.getString("collection"));
+                } else {
+                    holder.item_category.setText("");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (item.getWear() == 0.0) {
+            holder.item_wear_value.setText("");
+        } else {
+            holder.item_wear_value.setText(String.format(Locale.US, "%.6f", item.getWear()));
+        }
+
+        if (item.getImage() != null) {
             Picasso.get()
-                    .load(getValidImageURL((JSONObject) offer.getImage()))
+                    .load(getValidImageURL(item.getImage()))
                     .error(context.getResources().getDrawable(R.drawable.opskins_logo_avatar))
                     .into(holder.item_image);
         } else
@@ -109,15 +145,29 @@ public class InventoryItemAdapter extends RecyclerView.Adapter<InventoryItemAdap
         notifyItemChanged(position);
     }
 
-    private String getValidImageURL(JSONObject imageObject) {
+    private String getValidImageURL(Object image) {
+
         String imageURL = "";
+
         try {
-            if (imageObject.has("300px")) {
-                imageURL = imageObject.getString("300px");
+            JSONObject imageObject = (JSONObject) image;
+
+            try {
+                if (imageObject.has("300px")) {
+                    imageURL = imageObject.getString("300px");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
+
+        } catch (Exception e) {
+            try {
+                imageURL = (String) image;
+            } catch (ClassCastException ex) {
+                ex.printStackTrace();
+            }
         }
+
         return imageURL;
     }
 }

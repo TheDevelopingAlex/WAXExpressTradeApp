@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import developingalex.com.waxtradeapp.R;
 import developingalex.com.waxtradeapp.objects.StandardItem;
@@ -37,7 +37,7 @@ public class OfferItemAdapter extends RecyclerView.Adapter<OfferItemAdapter.View
         final RelativeLayout offer_item_layout;
         final TextView item_price;
         final TextView item_name;
-        final TextView item_wear;
+        final TextView item_category;
         final TextView item_wear_value;
         final ImageView item_image;
 
@@ -46,7 +46,7 @@ public class OfferItemAdapter extends RecyclerView.Adapter<OfferItemAdapter.View
             offer_item_layout = itemView.findViewById(R.id.offer_item_layout);
             item_price = itemView.findViewById(R.id.offer_detail_item_price);
             item_name = itemView.findViewById(R.id.offer_detail_item_name);
-            item_wear = itemView.findViewById(R.id.offer_detail_item_wear);
+            item_category = itemView.findViewById(R.id.offer_detail_item_wear);
             item_wear_value = itemView.findViewById(R.id.offer_detail_item_wear_value);
             item_image = itemView.findViewById(R.id.offer_detail_item_image);
         }
@@ -64,10 +64,8 @@ public class OfferItemAdapter extends RecyclerView.Adapter<OfferItemAdapter.View
 
         final StandardItem item = offerItems.get(position);
 
-        Log.w("OfferItemAdapter", item.toString());
-
         holder.offer_item_layout.setBackgroundColor(Color.parseColor(item.isHighlighted() ? "#1000ff00" : "#80000000"));
-        holder.item_price.setText(String.valueOf(item.getSuggested_price() / 100));
+        holder.item_price.setText(String.format(Locale.US, "%.2f", item.getSuggested_price()) + "$");
         holder.item_name.setText(item.getName());
 
         int color;
@@ -79,17 +77,45 @@ public class OfferItemAdapter extends RecyclerView.Adapter<OfferItemAdapter.View
         holder.item_name.setTextColor(color);
 
         holder.item_name.setSelected(true);
-        holder.item_wear.setText(String.valueOf(item.getWear()));
-        holder.item_wear.setTextColor(color);
-        holder.item_wear_value.setText(String.valueOf(item.getWear()));
+        holder.item_category.setTextColor(color);
+
+        if (!item.getCategory().isEmpty()) {
+            holder.item_category.setText(item.getCategory());
+        } else if (!item.getType().isEmpty()) {
+            holder.item_category.setText(item.getType());
+        } else if (!item.getRarity().isEmpty()) {
+            holder.item_category.setText(item.getRarity());
+        } else {
+
+            try {
+                JSONObject attributes = (JSONObject) item.getAttributes();
+
+                if (attributes.has("item_type") && !attributes.getString("item_type").isEmpty()) {
+                    holder.item_category.setText(attributes.getString("item_type"));
+                } else if (attributes.has("collection") && !attributes.getString("collection").isEmpty()){
+                    holder.item_category.setText(attributes.getString("collection"));
+                } else {
+                    holder.item_category.setText("");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (item.getWear() == 0.0) {
+            holder.item_wear_value.setText("");
+        } else {
+            holder.item_wear_value.setText(String.format(Locale.US, "%.6f", item.getWear()));
+        }
 
         if (item.getImage() != null) {
             Picasso.get()
-                    .load(getValidImageURL((JSONObject) item.getImage()))
+                    .load(getValidImageURL(item.getImage()))
                     .error(context.getResources().getDrawable(R.drawable.opskins_logo_avatar))
                     .into(holder.item_image);
-        } else
+        } else {
             holder.item_image.setImageDrawable(context.getResources().getDrawable(R.drawable.opskins_logo_avatar));
+        }
     }
 
     @Override
@@ -98,16 +124,31 @@ public class OfferItemAdapter extends RecyclerView.Adapter<OfferItemAdapter.View
     }
 
 
-    private String getValidImageURL(JSONObject imageObject) {
+    private String getValidImageURL(Object image) {
+
         String imageURL = "";
+
         try {
-            if (imageObject.has("300px")) {
-                imageURL = imageObject.getString("300px");
+            JSONObject imageObject = (JSONObject) image;
+
+            try {
+                if (imageObject.has("300px")) {
+                    imageURL = imageObject.getString("300px");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        } catch (JSONException e) {
+
+        } catch (Exception e) {
+
+            try {
+                imageURL = (String) image;
+            } catch (ClassCastException ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
         }
-        Log.w("OfferItemAdapter", imageURL);
+
         return imageURL;
     }
 }

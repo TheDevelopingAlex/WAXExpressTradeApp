@@ -1,11 +1,9 @@
 package developingalex.com.waxtradeapp.objects;
 
-import org.json.JSONObject;
-
 public class StandardItem {
 
-    private final int id, internal_app_id, def_id, sku, trade_hold_expires, suggested_price, suggested_price_floor, pattern_index, paint_index, wear_tier_index, time_created, time_updated;
-    private final double wear;
+    private final int id, internal_app_id, def_id, sku, trade_hold_expires, pattern_index, paint_index, wear_tier_index, time_created, time_updated;
+    private final double wear, suggested_price, suggested_price_floor;
     private final boolean tradeable, is_trade_restricted, instant_sell_enabled;
     private final String name, market_name, category, rarity, type, color, inspect, eth_inspect;
     private final Object image, preview_urls, assets, attributes;
@@ -32,8 +30,8 @@ public class StandardItem {
         this.type = type;
         this.color = color;
         this.image = image;
-        this.suggested_price = suggested_price;
-        this.suggested_price_floor=  suggested_price_floor;
+        this.suggested_price = (double) suggested_price / 100.0;
+        this.suggested_price_floor=  (double) suggested_price_floor / 100.0;
         this.instant_sell_enabled = instant_sell_enabled;
         this.preview_urls = preview_urls;
         this.assets = assets;
@@ -68,11 +66,11 @@ public class StandardItem {
         return trade_hold_expires;
     }
 
-    public int getSuggested_price() {
+    public double getSuggested_price() {
         return suggested_price;
     }
 
-    public int getSuggested_price_floor() {
+    public double getSuggested_price_floor() {
         return suggested_price_floor;
     }
 

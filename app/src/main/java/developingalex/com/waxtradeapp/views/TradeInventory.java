@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -64,7 +65,6 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         final Toolbar toolbar = findViewById(R.id.trade_inventory_toolbar);
         toolbar.setTitle("Inventory");
 
-        // Adds Back-Arrow to Toolbar
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -85,15 +85,22 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         itemAdapter.setOnItemClickListener(new ItemClickListener() {
             @Override
             public void onItemClick(int position) {
-                if (selectedItems.contains(itemList.get(position).getId())) {
-                    selectedItems.remove(itemList.get(position).getId());
-                    itemAdapter.toggleItemActive(position);
+
+
+                int currentItem = itemList.get(position).getId();
+                int selectedItem = selectedItems.indexOf(currentItem);
+
+                if (selectedItem != -1) {
+                    selectedItems.remove(selectedItem);
                     total_value -= itemList.get(position).getSuggested_price();
                 } else {
-                    selectedItems.add(itemList.get(position).getId());
-                    itemAdapter.toggleItemActive(position);
+                    selectedItems.add(currentItem);
                     total_value += itemList.get(position).getSuggested_price();
                 }
+
+                Log.w("TradeInventory", selectedItems.toString());
+
+                itemAdapter.toggleItemActive(position);
             }
 
             @Override

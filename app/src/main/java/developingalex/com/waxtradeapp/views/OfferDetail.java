@@ -39,47 +39,45 @@ public class OfferDetail extends AppCompatActivity {
     private int offerId;
     private TradeInterface tradeInterface;
 
+    private ProgressDialog progressDialog;
+
     private ScrollView content;
     private LinearLayout message;
     private TextView username, status, their_info, their_info_value, your_info, your_info_value, message_text;
     private ImageView userpic;
 
-    private ProgressDialog progressDialog;
-
-    private OfferItemAdapter itemAdapter1;
-    private OfferItemAdapter itemAdapter2;
-
-    private ArrayList<StandardItem> itemList1 = new ArrayList<>();
-    private ArrayList<StandardItem> itemList2 = new ArrayList<>();
-
+    private RecyclerView recyclerViewTop, recyclerViewBot;
+    private OfferItemAdapter itemAdapterTop, itemAdapterBot;
+    private ArrayList<StandardItem> itemListTop = new ArrayList<>(), itemListBot = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_offer_detail);
 
-        // Get ID as parameter
         Bundle b = getIntent().getExtras();
         assert b != null;
         offerId = b.getInt("offerId");
 
         tradeInterface = new TradeImplementation(this);
 
-        // Init Toolbar
         Toolbar toolbar = findViewById(R.id.offer_detail_toolbar);
         toolbar.setTitle("Offer #" + offerId);
 
-        // Adds Back-Arrow to Toolbar
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        // Show ProgressDialog
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading Offer ...");
         progressDialog.show();
 
-        // Init other things
+        initComponents();
+        initRecyclerViews();
+    }
+
+    private void initComponents() {
+
         content = findViewById(R.id.offer_detail_content);
         message = findViewById(R.id.offer_detail_message);
         message_text = findViewById(R.id.offer_detail_messagetext);
@@ -90,31 +88,42 @@ public class OfferDetail extends AppCompatActivity {
         their_info_value = findViewById(R.id.offer_detail_their_value);
         your_info = findViewById(R.id.offer_detail_your);
         your_info_value = findViewById(R.id.offer_detail_your_value);
+        recyclerViewTop = findViewById(R.id.offer_detail_RVTop);
+        recyclerViewBot = findViewById(R.id.offer_detail_RVBot);
+    }
 
-        // Init RecyclerViews
-        final RecyclerView mRecyclerViewTop = findViewById(R.id.offer_detail_RVTop);
-        mRecyclerViewTop.setHasFixedSize(true);
-        mRecyclerViewTop.setLayoutManager(new GridLayoutManager(OfferDetail.this, 1, GridLayoutManager.HORIZONTAL, false));
+    private void initRecyclerViews() {
 
-        final RecyclerView mRecyclerViewBot = findViewById(R.id.offer_detail_RVBot);
-        mRecyclerViewBot.setHasFixedSize(true);
-        mRecyclerViewBot.setLayoutManager(new GridLayoutManager(OfferDetail.this, 1, GridLayoutManager.HORIZONTAL, false));
+        recyclerViewTop.setHasFixedSize(true);
+        recyclerViewTop.setLayoutManager(new GridLayoutManager(this, 1, GridLayoutManager.HORIZONTAL, false));
 
-        //initializing adapter
-        itemAdapter1 = new OfferItemAdapter(OfferDetail.this, itemList1);
-        mRecyclerViewTop.setAdapter(itemAdapter1);
+        recyclerViewBot.setHasFixedSize(true);
+        recyclerViewBot.setLayoutManager(new GridLayoutManager(this, 1, GridLayoutManager.HORIZONTAL, false));
 
-        //initializing adapter
-        itemAdapter2 = new OfferItemAdapter(OfferDetail.this, itemList2);
-        mRecyclerViewBot.setAdapter(itemAdapter2);
+        initAdapters();
+    }
+
+    private void initAdapters() {
+
+        itemAdapterTop = new OfferItemAdapter(this, itemListTop);
+        recyclerViewTop.setAdapter(itemAdapterTop);
+
+        itemAdapterBot = new OfferItemAdapter(this, itemListBot);
+        recyclerViewBot.setAdapter(itemAdapterBot);
+
+        loadOffer();
+    }
+
+    private void loadOffer() {
 
         new AsyncOfferLoader(this, offerId, new OfferListener() {
             @Override
             public void onSuccess(ArrayList<StandardTradeOffer> items) {
 
                 StandardTradeOffer offer = items.get(0);
-                itemList1.clear();
-                itemList2.clear();
+
+                itemListTop.clear();
+                itemListBot.clear();
 
                 status.setText(offer.getState_name());
 
@@ -130,11 +139,11 @@ public class OfferDetail extends AppCompatActivity {
 
                     their_info.setText("Their Items (" + offer.getRecipient().getItems().size() + ")");
                     their_info_value.setText("Total Value: " + String.format(java.util.Locale.US, "%.2f", getItemsPrice(offer.getRecipient().getItems())) + "$");
-                    itemList1 = offer.getRecipient().getItems();
+                    itemListTop = offer.getRecipient().getItems();
 
                     your_info.setText("Your Items (" + offer.getSender().getItems().size() + ")");
                     your_info_value.setText("Total Value: " + String.format(java.util.Locale.US, "%.2f", getItemsPrice(offer.getSender().getItems())) + "$");
-                    itemList2 = offer.getSender().getItems();
+                    itemListBot = offer.getSender().getItems();
 
                 } else {
 
@@ -148,11 +157,11 @@ public class OfferDetail extends AppCompatActivity {
 
                     their_info.setText("Their Items (" +offer.getSender().getItems().size() + ")");
                     their_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", getItemsPrice(offer.getSender().getItems())) + "$");
-                    itemList1 = offer.getSender().getItems();
+                    itemListTop = offer.getSender().getItems();
 
                     your_info.setText("Your Items (" +offer.getRecipient().getItems().size() + ")");
                     your_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", getItemsPrice(offer.getRecipient().getItems())) + "$");
-                    itemList2 = offer.getRecipient().getItems();
+                    itemListBot = offer.getRecipient().getItems();
                 }
 
                 if (!offer.getMessage().isEmpty()) {
@@ -160,9 +169,9 @@ public class OfferDetail extends AppCompatActivity {
                     message_text.setText("Message: " + offer.getMessage());
                 }
 
-                itemAdapter1.notifyDataSetChanged();
-                itemAdapter2.notifyDataSetChanged();
-                // Show content when everything is loaded
+                itemAdapterTop.notifyDataSetChanged();
+                itemAdapterBot.notifyDataSetChanged();
+
                 content.setVisibility(View.VISIBLE);
 
                 progressDialog.dismiss();
@@ -181,7 +190,7 @@ public class OfferDetail extends AppCompatActivity {
 
         for (int i = 0; i < items.size(); i++) {
             StandardItem item = items.get(i);
-            price += ((double) item.getSuggested_price() / 100);
+            price += item.getSuggested_price();
         }
 
         return price;
@@ -193,16 +202,14 @@ public class OfferDetail extends AppCompatActivity {
         return true;
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // Get ID as parameter
         Bundle b = getIntent().getExtras();
         assert b != null;
         if (b.containsKey("hideAccept") && !b.getBoolean("hideAccept")) {
             getMenuInflater().inflate(R.menu.inventory_toolbar, menu);
         }
+
         return true;
     }
 

@@ -316,7 +316,7 @@ public class DrawerReceived extends Fragment {
 
         for (int i = 0; i < items.size(); i++) {
             StandardItem item = items.get(i);
-            price += ((double) item.getSuggested_price() / 100);
+            price += item.getSuggested_price();
         }
 
         return price;
