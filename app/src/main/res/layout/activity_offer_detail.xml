@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/background"
     android:fitsSystemWindows="true"
-    tools:context=".OfferDetail">
+    tools:context=".views.OfferDetail">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -133,7 +133,8 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:background="#22A9A9A9"
-                android:padding="5dp"/>
+                android:padding="5dp"
+                android:visibility="visible" />
 
             <ImageView
                 android:id="@+id/TradeIcon"
@@ -193,7 +194,8 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:background="#22A9A9A9"
-                android:padding="5dp" />
+                android:padding="5dp"
+                android:visibility="visible" />
 
 
             <LinearLayout

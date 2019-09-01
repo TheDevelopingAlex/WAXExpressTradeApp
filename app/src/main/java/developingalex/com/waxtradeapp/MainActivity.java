@@ -12,12 +12,13 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import developingalex.com.waxtradeapp.lib.ChromeCustomTab;
-import developingalex.com.waxtradeapp.lib.OAuth;
+import developingalex.com.waxtradeapp.lib.OAuthImplementation;
+import developingalex.com.waxtradeapp.views.TradeArea;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private OAuth oAuth;
+    private OAuthImplementation oAuthImplementation;
 
     private ChromeCustomTab chromeCustomTab;
     private CardView loginButton;
@@ -30,15 +31,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        oAuth = new OAuth(this);
-        if (oAuth.checkAuthStatus()) {
+        oAuthImplementation = new OAuthImplementation(this);
+        if (oAuthImplementation.checkAuthStatus()) {
             Intent intent = new Intent(MainActivity.this, TradeArea.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK); // clears all previous activities task
             startActivity(intent);
             finish(); // destroy current activity
         } else {
-            chromeCustomTab = new ChromeCustomTab(this, oAuth.getURL());
+            chromeCustomTab = new ChromeCustomTab(this, oAuthImplementation.getAuthURL());
             chromeCustomTab.warmup();
             chromeCustomTab.mayLaunch();
 
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
         final Uri uri = getIntent().getData();
 
-        if (uri != null && uri.toString().startsWith(oAuth.getRedirectUri())) {
+        if (uri != null && uri.toString().startsWith(oAuthImplementation.getRedirectUri())) {
 
             code = uri.getQueryParameter("code");
 
@@ -74,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         try {
-                            if (oAuth.accountSetup(code)) {
+                            if (oAuthImplementation.accountSetup(code)) {
                                 Intent intent = new Intent(MainActivity.this, TradeArea.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK); // clears all previous activities task

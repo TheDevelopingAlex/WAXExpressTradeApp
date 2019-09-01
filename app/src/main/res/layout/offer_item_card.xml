@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="250dp"
+    android:layout_width="220dp"
     android:layout_height="wrap_content"
     android:paddingLeft="2dp"
     android:paddingTop="5dp"
     android:paddingRight="2dp"
     android:paddingBottom="10dp">
 
-    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    <android.support.v7.widget.CardView
         android:id="@+id/card_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:padding="5dp"
+        card_view:cardBackgroundColor="@color/colorPrimaryDark"
         card_view:cardCornerRadius="1dp"
         card_view:cardUseCompatPadding="true"
         tools:layout_editor_absoluteX="2dp"
@@ -26,15 +28,18 @@
 
             <ImageView
                 android:id="@+id/offer_detail_item_image"
-                android:layout_width="140dp"
-                android:layout_height="160dp"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="-10dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:adjustViewBounds="true"
                 android:contentDescription="@string/desc_itemImage"
-                android:scaleType="centerCrop"
-                android:src="@drawable/opskin_logo"
-                android:padding="10dp"/>
+                android:scaleType="centerInside"
+                android:src="@drawable/opskin_logo" />
 
             <TextView
                 android:id="@+id/offer_detail_item_name"
@@ -42,17 +47,14 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/offer_detail_item_image"
                 android:layout_marginStart="5dp"
-                android:layout_marginTop="-10dp"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
                 android:textAllCaps="true"
                 android:textColor="@color/colorAccent"
                 android:textSize="16sp"
-                android:textStyle="bold"
-
-                android:singleLine="true"
-                android:scrollHorizontally="true"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit ="marquee_forever"
-                />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/offer_detail_item_wear"

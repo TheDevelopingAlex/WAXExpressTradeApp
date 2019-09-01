@@ -19,7 +19,7 @@
     <string name="info_no_offer">No Offers Found</string>
     <string name="infoText1">- Create WAX ExpressTrade trades</string>
     <string name="infoText2">- Manage your trades</string>
-    <string name="loginText">Sign In via OPSkins</string>
+    <string name="loginText">Sign In via WAX All-Access</string>
     <string name="trade_message_helper_text">Message</string>
     <string name="trade_message_hint">(optional)</string>
     <string name="trade_2FA">Two-Factor Authentication Code</string>

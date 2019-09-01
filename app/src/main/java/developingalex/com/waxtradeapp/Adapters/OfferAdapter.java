@@ -1,4 +1,4 @@
-package developingalex.com.waxtradeapp.Adapters;
+package developingalex.com.waxtradeapp.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -19,42 +19,24 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 
 import developingalex.com.waxtradeapp.R;
+import developingalex.com.waxtradeapp.interfaces.ItemClickListener;
+import developingalex.com.waxtradeapp.objects.Offer;
 
 
 public class OfferAdapter extends RecyclerView.Adapter<OfferAdapter.OfferViewHolder> {
 
-    private Context mContext;
-    private ArrayList<Offer> mOfferList;
-    private OnItemClickListener mListener;
+    private Context context;
+    private ArrayList<Offer> offerList;
+    private ItemClickListener listener;
     private int lastPosition = -1;
 
     private boolean acceptVisibility = true;
     private boolean declineVisibility = true;
     private boolean statusTextVisibility;
 
-    public interface OnItemClickListener {
-        void onItemClick(int position);
-        void onAcceptClick(int position);
-        void onDeclineClick(int position);
-    }
-
-    public void setOnItemClickListener(OnItemClickListener listener) {
-        mListener = listener;
-    }
-
-    public void acceptButtonVisibility(boolean visibility) {
-        this.acceptVisibility = visibility;
-        notifyDataSetChanged();
-    }
-
-    public void declineButtonVisibility(boolean visibility) {
-        this.declineVisibility = visibility;
-        notifyDataSetChanged();
-    }
-
-    public void statusTextVisibility(boolean visibility) {
-        statusTextVisibility = visibility;
-        notifyDataSetChanged();
+    public OfferAdapter(Context context, ArrayList<Offer> offerList) {
+        this.context = context;
+        this.offerList = offerList;
     }
 
     static class OfferViewHolder extends RecyclerView.ViewHolder {
@@ -68,14 +50,14 @@ public class OfferAdapter extends RecyclerView.Adapter<OfferAdapter.OfferViewHol
         final ImageButton mDeclineButton;
         final TextView mStatusTextStatus;
 
-        OfferViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
+        OfferViewHolder(@NonNull View itemView, final ItemClickListener listener) {
             super(itemView);
 
             cardView = itemView.findViewById(R.id.offerCardView);
             mImageView = itemView.findViewById(R.id.offerUserPic);
             username = itemView.findViewById(R.id.offerUsername);
-            yourOffer = itemView.findViewById(R.id.offerTheir);
-            theirOffer = itemView.findViewById(R.id.offerYour);
+            theirOffer = itemView.findViewById(R.id.offerTheir);
+            yourOffer = itemView.findViewById(R.id.offerYour);
             mAcceptButton = itemView.findViewById(R.id.offerAccept);
             mDeclineButton = itemView.findViewById(R.id.offerDecline);
             mStatusTextStatus = itemView.findViewById(R.id.statusTextStatus);
@@ -115,22 +97,17 @@ public class OfferAdapter extends RecyclerView.Adapter<OfferAdapter.OfferViewHol
         }
     }
 
-    public OfferAdapter(Context mCtx, ArrayList<Offer> offerArrayList) {
-        mContext = mCtx;
-        mOfferList = offerArrayList;
-    }
-
     @NonNull
     @Override
     public OfferViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View v = LayoutInflater.from(mContext).inflate(R.layout.layout_offer, viewGroup, false);
-        return new OfferViewHolder(v, mListener);
+        final View v = LayoutInflater.from(context).inflate(R.layout.layout_offer, viewGroup, false);
+        return new OfferViewHolder(v, listener);
     }
 
     @Override
     public void onBindViewHolder(@NonNull OfferViewHolder offerViewHolder, final int position) {
 
-        final Offer currentOffer = mOfferList.get(position);
+        final Offer currentOffer = offerList.get(position);
 
         offerViewHolder.mAcceptButton.setVisibility(acceptVisibility ? View.VISIBLE: View.INVISIBLE);
         offerViewHolder.mDeclineButton.setVisibility(declineVisibility ? View.VISIBLE: View.INVISIBLE);
@@ -151,35 +128,31 @@ public class OfferAdapter extends RecyclerView.Adapter<OfferAdapter.OfferViewHol
                     offerViewHolder.cardView.setCardBackgroundColor(Color.parseColor("#33A9A9A9")); // default transparent grey
                     break;
             }
-        } else
+        } else {
             offerViewHolder.mStatusTextStatus.setVisibility(View.INVISIBLE);
-
+        }
 
         offerViewHolder.username.setText(currentOffer.getUsername());
-        offerViewHolder.yourOffer.setText(currentOffer.getTheirOffer());
-        offerViewHolder.theirOffer.setText(String.valueOf(currentOffer.getYourOffer()));
+        offerViewHolder.yourOffer.setText(currentOffer.getYourOffer());
+        offerViewHolder.theirOffer.setText(currentOffer.getTheirOffer());
 
-        if (currentOffer.getImage() == null) {
-            offerViewHolder.mImageView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.opskins_logo_avatar));
-        } else {
+        if (currentOffer.getImage() != null) {
             Picasso.get()
                     .load(currentOffer.getImage())
-                    .error(mContext.getResources().getDrawable(R.drawable.opskins_logo_avatar))
-                    .placeholder(mContext.getResources().getDrawable(R.drawable.opskins_logo_avatar))
+                    .error(context.getResources().getDrawable(R.drawable.opskins_logo_avatar))
+                    .placeholder(context.getResources().getDrawable(R.drawable.opskins_logo_avatar))
                     .into(offerViewHolder.mImageView);
-        }
+        } else
+            offerViewHolder.mImageView.setImageDrawable(context.getResources().getDrawable(R.drawable.opskins_logo_avatar));
 
         // Here you apply the animation when the view is bound
         setAnimation(offerViewHolder.itemView, position);
-
     }
 
-    private void setAnimation(View viewToAnimate, int position)
-    {
+    private void setAnimation(View viewToAnimate, int position) {
         // If the bound view wasn't previously displayed on screen, it's animated
-        if (position > lastPosition)
-        {
-            Animation animation = AnimationUtils.loadAnimation(mContext, android.R.anim.fade_in);
+        if (position > lastPosition) {
+            final Animation animation = AnimationUtils.loadAnimation(context, android.R.anim.fade_in);
             viewToAnimate.startAnimation(animation);
             lastPosition = position;
         }
@@ -187,6 +160,25 @@ public class OfferAdapter extends RecyclerView.Adapter<OfferAdapter.OfferViewHol
 
     @Override
     public int getItemCount() {
-        return mOfferList.size();
+        return offerList.size();
+    }
+
+    public void setOnItemClickListener(ItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    public void acceptButtonVisibility(boolean visibility) {
+        this.acceptVisibility = visibility;
+        notifyDataSetChanged();
+    }
+
+    public void declineButtonVisibility(boolean visibility) {
+        this.declineVisibility = visibility;
+        notifyDataSetChanged();
+    }
+
+    public void statusTextVisibility(boolean visibility) {
+        statusTextVisibility = visibility;
+        notifyDataSetChanged();
     }
 }

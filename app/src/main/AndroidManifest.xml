@@ -16,7 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service
-            android:name=".myJobService"
+            android:name=".lib.MyJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity
@@ -38,7 +38,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".TradeArea"
+            android:name=".views.TradeArea"
             android:configChanges="orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:label=""
             android:parentActivityName=".MainActivity"
@@ -49,25 +49,25 @@
                 android:value="developingalex.com.waxtradeapp.MainActivity" />
         </activity>
         <activity
-            android:name=".OfferDetail"
+            android:name=".views.OfferDetail"
             android:configChanges="orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".Trade"
+            android:name=".views.Trade"
             android:configChanges="orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".CreateOffer"
+            android:name=".views.CreateOffer"
             android:configChanges="orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:screenOrientation="portrait"/>
         <activity
-            android:name=".CreateOfferCamera"
+            android:name=".views.CreateOfferCamera"
             android:configChanges="orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".TradeInventory"
+            android:name=".views.TradeInventory"
             android:configChanges="orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:screenOrientation="portrait" />
     </application>
