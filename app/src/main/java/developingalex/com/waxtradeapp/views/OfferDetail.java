@@ -139,11 +139,13 @@ public class OfferDetail extends AppCompatActivity {
 
                     their_info.setText("Their Items (" + offer.getRecipient().getItems().size() + ")");
                     their_info_value.setText("Total Value: " + String.format(java.util.Locale.US, "%.2f", getItemsPrice(offer.getRecipient().getItems())) + "$");
-                    itemListTop = offer.getRecipient().getItems();
+                    itemListTop.addAll(offer.getRecipient().getItems());
 
                     your_info.setText("Your Items (" + offer.getSender().getItems().size() + ")");
                     your_info_value.setText("Total Value: " + String.format(java.util.Locale.US, "%.2f", getItemsPrice(offer.getSender().getItems())) + "$");
-                    itemListBot = offer.getSender().getItems();
+                    itemListBot.addAll(offer.getSender().getItems());
+
+
 
                 } else {
 
@@ -157,11 +159,11 @@ public class OfferDetail extends AppCompatActivity {
 
                     their_info.setText("Their Items (" +offer.getSender().getItems().size() + ")");
                     their_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", getItemsPrice(offer.getSender().getItems())) + "$");
-                    itemListTop = offer.getSender().getItems();
+                    itemListTop.addAll(offer.getSender().getItems());
 
                     your_info.setText("Your Items (" +offer.getRecipient().getItems().size() + ")");
                     your_info_value.setText("Total Value: " + String.format(java.util.Locale.US,"%.2f", getItemsPrice(offer.getRecipient().getItems())) + "$");
-                    itemListBot = offer.getRecipient().getItems();
+                    itemListBot.addAll(offer.getRecipient().getItems());
                 }
 
                 if (!offer.getMessage().isEmpty()) {

@@ -42,7 +42,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
     private ProgressBar progressBar;
     private TextView emptyInventory;
     private Spinner apps_dropdown;
-    private RecyclerView mRecyclerView;
+    private RecyclerView recyclerView;
     private InventoryItemAdapter itemAdapter;
     private ArrayList<StandardItem> itemList = new ArrayList<>();
 
@@ -75,12 +75,12 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         apps_dropdown = findViewById(R.id.trade_apps_spinner);
         apps_dropdown.setOnItemSelectedListener(TradeInventory.this);
 
-        mRecyclerView = findViewById(R.id.trade_inventory_recyclerView);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        recyclerView = findViewById(R.id.trade_inventory_recyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
         itemAdapter = new InventoryItemAdapter(this, itemList);
-        mRecyclerView.setAdapter(itemAdapter);
+        recyclerView.setAdapter(itemAdapter);
 
         itemAdapter.setOnItemClickListener(new ItemClickListener() {
             @Override
@@ -113,19 +113,16 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
         });
 
 
-        // get all apps from OPSkins
         new AppsFetcher(this, new OnEventListener() {
             @Override
             public void onSuccess(JSONArray apps) {
                 try {
                     for (int i = 0; i < apps.length(); i++) {
                         JSONObject app = apps.getJSONObject(i);
-                        //apps_list.add(app.getString("name"));
                         apps_list.add(new AppsData(app.getString("name"), app.getString("img")));
                         apps_list_id.add(app.getInt("internal_app_id"));
                     }
                     SpinnerAdapter adapter = new SpinnerAdapter(TradeInventory.this, R.layout.spinner_layout, R.id.appsText, apps_list);
-                    //set the spinners adapter to the previously created one.
                     apps_dropdown.setAdapter(adapter);
                     apps_dropdown.setVisibility(View.VISIBLE);
                 } catch (JSONException e) {
@@ -145,7 +142,7 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
 
         progressBar.setVisibility(View.VISIBLE);
         emptyInventory.setVisibility(View.INVISIBLE);
-        mRecyclerView.setVisibility(View.INVISIBLE);
+        recyclerView.setVisibility(View.INVISIBLE);
 
         new InventoryFetcher(this, user_id, app_id, new OnEventListener2() {
             @Override
@@ -199,10 +196,10 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
 
                     if (items.length() <= 0) {
                         emptyInventory.setVisibility(View.VISIBLE);
-                        mRecyclerView.setVisibility(View.INVISIBLE);
+                        recyclerView.setVisibility(View.INVISIBLE);
                     } else {
                         emptyInventory.setVisibility(View.INVISIBLE);
-                        mRecyclerView.setVisibility(View.VISIBLE);
+                        recyclerView.setVisibility(View.VISIBLE);
                     }
 
                 } catch (JSONException e) {
@@ -219,11 +216,12 @@ public class TradeInventory extends AppCompatActivity implements AdapterView.OnI
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        // Showing selected spinner item
-        if (user_id != null)
-            getInventoryByAppID(user_id , apps_list_id.get(position));
-        else
+
+        if (user_id != null) {
+            getInventoryByAppID(user_id, apps_list_id.get(position));
+        } else {
             Toast.makeText(TradeInventory.this, "Please Try Again!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void onNothingSelected(AdapterView<?> arg0) {
